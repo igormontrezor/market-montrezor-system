@@ -1,0 +1,2 @@
+[console_scripts]
+market-analyze = market_analyze.main:main

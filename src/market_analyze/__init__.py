@@ -1,0 +1,38 @@
+"""
+Market Analysis System
+
+Sistema completo para análise de mercado financeiro com indicadores técnicos,
+sinais de trading e visualizações.
+"""
+
+from .assets import Asset, Crypto, Btc, Portfolio, Position, LongPosition, ShortPosition, Provider, YahooProvider
+from .indicators import (
+    Indicator, SimpleMovingAverage, ExponentialMovingAverage, Rsi,
+    StochRsi, BollingerBands, Macd, SharpeRatio, SortinoRatio, Calculations
+)
+from .signals import (
+    Signal, RsiSignal, StochRsiSignal, BollingerBandsSignal,
+    MacdSignal, SharpeSignal, SortinoSignal, CombinedSignal
+)
+from .plotting import ChartPlotter
+
+__version__ = "1.0.0"
+__author__ = "Market Montrezor System"
+
+__all__ = [
+    # Assets
+    'Asset', 'Crypto', 'Btc', 'Portfolio', 'Position', 'LongPosition', 'ShortPosition',
+    'Provider', 'YahooProvider',
+
+    # Indicators
+    'Indicator', 'SimpleMovingAverage', 'ExponentialMovingAverage', 'Rsi',
+    'StochRsi', 'BollingerBands', 'Macd', 'SharpeRatio', 'SortinoRatio',
+    'Calculations',
+
+    # Signals
+    'Signal', 'RsiSignal', 'StochRsiSignal', 'BollingerBandsSignal',
+    'MacdSignal', 'SharpeSignal', 'SortinoSignal', 'CombinedSignal',
+
+    # Plotting
+    'ChartPlotter'
+]
