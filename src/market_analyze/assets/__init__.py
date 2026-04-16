@@ -1,10 +1,11 @@
-from .asset import (
-    Asset, Crypto, Btc, Portfolio, Position, 
-    LongPosition, ShortPosition, Provider, YahooProvider
-)
+from .asset import Asset, MarketAsset
+from .portfolio import Portfolio, Position, LongPosition, ShortPosition
+from .provider import Provider, YahooProvider, BinanceProvider
+from dataclasses import dataclass, field
+
 
 __all__ = [
-    'Asset', 'Crypto', 'Btc',
+    'Asset', 'MarketAsset',
     'Portfolio', 'Position', 'LongPosition', 'ShortPosition',
-    'Provider', 'YahooProvider'
+    'Provider', 'YahooProvider', 'BinanceProvider'
 ]

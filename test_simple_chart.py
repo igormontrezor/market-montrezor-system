@@ -1,9 +1,11 @@
 import sys
+
+from market_analyze.indicators import BollingerBands
 sys.path.append('./src')
 
-from market_analyze.assets import Crypto, YahooProvider
-from market_analyze.indicators import Rsi
-from market_analyze.signals import RsiSignal
+from market_analyze.assets import MarketAsset, YahooProvider
+from market_analyze.indicators import BollingerBands, Rsi
+from market_analyze.signals import BollingerBandsSignal, RsiSignal
 from market_analyze.plotting import ChartPlotter
 import pandas as pd
 
@@ -11,8 +13,8 @@ import pandas as pd
 print("=== TESTE SIMPLES DO GRÁFICO ===")
 
 # Criar asset
-provider = YahooProvider(period="6mo", interval="1wk")
-btc = Crypto("BTC-USD", provider=provider)
+provider = YahooProvider(period="6y", interval="1wk")
+btc = MarketAsset("BTC-USD", provider=provider)
 
 # Obter dados
 df = btc.get_prices()
@@ -20,24 +22,24 @@ print(f"Shape do DataFrame: {df.shape}")
 print(f"Colunas: {df.columns.tolist()}")
 
 # Calcular RSI simples
-rsi = Rsi(period=14)
-rsi_values = rsi.calculate(btc)
+bb = BollingerBands()
+bb_values = bb.calculate(btc)
 
-print(f"RSI shape: {rsi_values.shape}")
-print(f"RSI últimos valores: {rsi_values.tail()}")
+print(f"BB shape: {bb_values.shape}")
+print(f"BB últimos valores: {bb_values.tail()}")
 
 # Criar sinais RSI simples
-rsi_signal = RsiSignal(rsi=rsi, buy_threshold=30, sell_threshold=70)
-rsi_signals = rsi_signal.generate_signals(btc)
+bb_signal = BollingerBandsSignal(bb=bb)
+bb_signals = bb_signal.generate_signals(btc)
 
-print(f"Sinais shape: {rsi_signals.shape}")
-print(f"Sinais únicos: {rsi_signals.unique()}")
-print(f"Sinais de compra: {(rsi_signals == -1).sum()}")
-print(f"Sinais de venda: {(rsi_signals == 1).sum()}")
+print(f"Sinais shape: {bb_signals.shape}")
+print(f"Sinais únicos: {bb_signals.unique()}")
+print(f"Sinais de compra: {(bb_signals == -1).sum()}")
+print(f"Sinais de venda: {(bb_signals == 1).sum()}")
 
 # Criar sinais booleanos
-buy_signals = rsi_signals == -1
-sell_signals = rsi_signals == 1
+buy_signals = bb_signals == -1
+sell_signals = bb_signals == 1
 
 print(f"Buy signals bool: {buy_signals.sum()}")
 print(f"Sell signals bool: {sell_signals.sum()}")

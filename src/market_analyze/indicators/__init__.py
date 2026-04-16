@@ -5,6 +5,5 @@ from .indicators import (
 
 __all__ = [
     'Indicator', 'SimpleMovingAverage', 'ExponentialMovingAverage', 'Rsi',
-    'StochRsi', 'BollingerBands', 'Macd', 'SharpeRatio', 'SortinoRatio',
-    'Calculations'
+    'StochRsi', 'BollingerBands', 'Macd', 'SharpeRatio', 'SortinoRatio', 'Calculations'
 ]

@@ -5,7 +5,7 @@ Sistema completo para análise de mercado financeiro com indicadores técnicos,
 sinais de trading e visualizações.
 """
 
-from .assets import Asset, Crypto, Btc, Portfolio, Position, LongPosition, ShortPosition, Provider, YahooProvider
+from .assets import Asset, Portfolio, Position, LongPosition, ShortPosition, Provider, YahooProvider
 from .indicators import (
     Indicator, SimpleMovingAverage, ExponentialMovingAverage, Rsi,
     StochRsi, BollingerBands, Macd, SharpeRatio, SortinoRatio, Calculations
@@ -15,13 +15,14 @@ from .signals import (
     MacdSignal, SharpeSignal, SortinoSignal, CombinedSignal
 )
 from .plotting import ChartPlotter
+from .strategies import Strategy, BtcStrategy
 
 __version__ = "1.0.0"
 __author__ = "Market Montrezor System"
 
 __all__ = [
     # Assets
-    'Asset', 'Crypto', 'Btc', 'Portfolio', 'Position', 'LongPosition', 'ShortPosition',
+    'Asset', 'Portfolio', 'Position', 'LongPosition', 'ShortPosition',
     'Provider', 'YahooProvider',
 
     # Indicators
@@ -35,4 +36,7 @@ __all__ = [
 
     # Plotting
     'ChartPlotter'
+
+    # Strategies
+    'Strategy', 'BtcStrategy'
 ]
