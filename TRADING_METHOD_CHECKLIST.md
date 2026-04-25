@@ -13,10 +13,10 @@
 ## 🔥 SINAIS PRINCIPAIS
 
 ### **Entrada A+:**
-- RSI resistência + Fibo 0.5–0.618 + tendência semanal
+- RSI resistência + Supertrend + Stochastic RSI(Tendencia inversa) nos times MENORES + tendência semanal
 
 ### **Venda Forte:**
-- Queda + pullback 0.618 + RSI no topo do canal
+- Queda + pullback 0.618 + RSI no topo do canal + Stochastic RSI(Tendencia inversa) nos times MENORES
 
 ### **Divergência:**
 - RSI mais alto + fundo maior no gráfico = entrada de compra
@@ -36,7 +36,7 @@
 
 **PESO MAIOR PARA A RESISTÊNCIA DO CANAL DO RSI**
 
-**OU SEJA:** RSI não bateu no topo/fundo da linha de tendência (está próximo), mas bateu na linha de tendência do RSI no preço ou rompeu → entrar na tendência (e vice versa).
+**OU SEJA:** RSI não bateu no topo/fundo da linha de tendência (está próximo), mas bateu na linha de tendência do RSI no preço ou rompeu → entrar na tendência (e vice versa) com o Stochastic RSI(Tendencia inversa) nos times MENORES.
 
 **USAR PRINCIPALMENTE DIÁRIO.**
 
@@ -56,32 +56,28 @@ Se RSI fizer topo menor mas preço continuar forte → **não entra sem confirma
 
 ---
 
-## ✅ CHECKLIST FINAL
-
-**VERIFICAR SEMPRE OS INDICADORES E PLOTS, PRINCIPALMENTE SHARPE E SORTINO NO WEEKLY E DAILY PARA CONFLUÊNCIA COM O CANAL DO RSI DO MT5**
-
----
-
 ## 📋 CHECKLIST COMPLETO
 
-### **🔍 ANTES DE ENTRAR:**
-- [ ] **Volatilidade:** ATR% adequado (1-3% ideal)
-- [ ] **RSI:** No canal de resistência/suporte
-- [ ] **Fibonacci:** 0.5-0.618 tocado
-- [ ] **Tendência:** Semanal alinhada
-- [ ] **Sharpe/Sortino:** Confirmam (weekly + daily)
+### **🔍 ENTRADA A+:**
 - [ ] **Supertrend:** Mesma direção no timeframe maior
-- [ ] **Divergência:** Verificar se não é enganosa
-- [ ] **Risk/Reward:** Mínimo 1:2
+- [ ] **Tendência:** Semanal alinhada
+- [ ] **RSI:** No canal de resistência/suporte
+- [ ] **STOCH RSI:** No contra fundo/topo da tendência no timeframe MENOR (inverso da tendência)
+- [ ] **Fibonacci:** 0.5-0.618 tocado
+- [ ] **Indicadores do market_analisis:** Confirmam (weekly + daily)
+- [ ] **Risk/Reward:** Mínimo 1:3 (usando fibo-extension 0.618 como take profit)
+
+### **🔍 ENTRADA A (PRINCIPAL):**
+- [ ] **Supertrend:** Mesma direção no timeframe maior
+- [ ] **Tendência:** Semanal alinhada
+- [ ] **RSI:** No canal de resistência/suporte
+- [ ] **STOCH RSI:** No contra fundo/topo da tendência no timeframe MENOR (inverso da tendência)
+- [ ] **Risk/Reward:** Mínimo 1:2 (usando fibo-extension 0.328 como take profit)
 
 ### **⚡ EXECUÇÃO:**
 - [ ] **Stop Loss:** Abaixo/Acima 0.618 ou swing high/low
 - [ ] **Take Profits:** 0.382 / 0.236 / 0.0 (extensão)
 - [ ] **Posição:** Máx 2% risco
-- [ ] **Confluência:** Mínimo 3 sinais alinhados
-
-### **🌊 MERCADO FORTE EM TENDÊNCIA:**
-- Ignorar Fibonacci
 
 ---
 
@@ -89,11 +85,35 @@ Se RSI fizer topo menor mas preço continuar forte → **não entra sem confirma
 
 - Operar sem confirmação Sharpe/Sortino
 - Ignorar sinais do canal RSI
-- Operar em baixa volatilidade
-- Revenge trading
 - Entrar sem confirmação de divergência
 
 ---
 
+## 🎯 EDGE DO SISTEMA
+
+**O timeframe maior manda**
+**O menor executa**
+
+## 🎯 EDGE DO SISTEMA - COMPRA
+
+**COMPRA:**
+
+**MN forte (acima de 50–60)**
+**W1 em pullback**
+**D1 no fundo do canal (seu edge)**
+**H4 virando pra cima**
+
+---
+
+## 🎯 EDGE DO SISTEMA - VENDA
+
+**VENDA:**
+
+**MN fraco**
+**W1 caindo**
+**D1 topo do canal RSI**
+**H4 virando pra baixo**
+
+---
 **Criado: Igor Montrezor Trading System**
 **Versão: 2.0 - Direto e Conciso**
