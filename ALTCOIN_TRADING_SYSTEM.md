@@ -1,4 +1,4 @@
-# 🚀 SISTEMA DE TRADING ALTCOINS
+# 🚀 SISTEMA DE COMPRA E VENDA ALTCOINS
 
 ## 📋 ESTRUTURA DO SISTEMA
 
@@ -13,7 +13,7 @@
 - **StochRSI OTHERS com sinal BULL ou USDT.D BEAR** → COMPRA NA HORA
 - Esta é a condição mais forte de ENTRADA no sistema
 
-### **🔥 SAIDA A+ (IMEDIATA)**
+### **🔥 VENDA A+ (IMEDIATA)**
 - **StochRSI OTHERS com sinal BEAR ou USDT.D BULL** → VENDA NA HORA
 - Esta é a condição mais forte de SAIDA do sistema
 
@@ -70,11 +70,8 @@
 - **Data do Sinal:** _________
 - **Tipo:** A+ / Padrão
 
-#### **🎯 METAS:**
-- **Stop Loss:** $_______________ (-____%)
-- **Take Profit 1:** $_______________ (+____%)
-- **Take Profit 2:** $_______________ (+____%)
-- **Take Profit 3:** $_______________ (+____%)
+#### **📊 MOTIVO DA COMPRA:**
+- **Circunstância:** _________________________
 
 #### **📊 RESULTADO:**
 - **Data Saída:** _________
@@ -97,11 +94,8 @@
 - **Data do Sinal:** _________
 - **Tipo:** A+ / Padrão
 
-#### **🎯 METAS:**
-- **Stop Loss:** $_______________ (-____%)
-- **Take Profit 1:** $_______________ (+____%)
-- **Take Profit 2:** $_______________ (+____%)
-- **Take Profit 3:** $_______________ (+____%)
+#### **📊 MOTIVO DA COMPRA:**
+- **Circunstância:** _________________________
 
 #### **📊 RESULTADO:**
 - **Data Saída:** _________
@@ -124,11 +118,8 @@
 - **Data do Sinal:** _________
 - **Tipo:** A+ / Padrão
 
-#### **🎯 METAS:**
-- **Stop Loss:** $_______________ (-____%)
-- **Take Profit 1:** $_______________ (+____%)
-- **Take Profit 2:** $_______________ (+____%)
-- **Take Profit 3:** $_______________ (+____%)
+#### **📊 MOTIVO DA COMPRA:**
+- **Circunstância:** _________________________
 
 #### **📊 RESULTADO:**
 - **Data Saída:** _________
@@ -146,8 +137,8 @@
 - **Total de Compras:** _________
 - **Compras A+ (StochRSI):** _________
 - **Compras Padrão:** _________
-- **Win Rate A+:** _________%
-- **Win Rate Padrão:** _________%
+- **Taxa de Sucesso A+:** _________%
+- **Taxa de Sucesso Padrão:** _________%
 - **Total Investido:** $_______________
 - **Total Retornado:** $_______________
 - **Lucro/Prejuízo:** $_______________
@@ -178,11 +169,6 @@
 - StochRSI OTHERS mostrando BEAR
 - BB %B OTHERS alto
 - USDT.D baixo
-
-### **💰 GESTÃO:**
-- Máx 2% risco por operação
-- Stop sempre definido
-- A+ pode ter tamanho maior de posição
 
 ---
 
