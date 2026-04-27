@@ -58,10 +58,15 @@ Se RSI fizer topo menor mas preço continuar forte → **não entra sem confirma
 
 ## 📋 CHECKLIST COMPLETO
 
+    TENDENCIA É O MAIOR PESO!
+NUNCA OPERAR CONTRA A TENDENCIA!
+DIARIO E SEMANAL SÃO OS MAIS IMPORTANTES!
+ENTRADA REFINADA NO DIARIO NO TOPO DO CANAL RSI COM O RSI DO SEMANAL TBM NO TOPO!
+
 ### **🔍 ENTRADA A+:**
 - [ ] **Supertrend:** Mesma direção no timeframe maior
 - [ ] **Tendência:** Semanal alinhada
-- [ ] **RSI:** No canal de resistência/suporte
+- [ ] **RSI:** No canal de resistência/suporte -> Peso maior para o timeframe MAIORES
 - [ ] **STOCH RSI:** No contra fundo/topo da tendência no timeframe MENOR (inverso da tendência)
 - [ ] **Fibonacci:** 0.5-0.618 tocado
 - [ ] **Indicadores do market_analisis:** Confirmam (weekly + daily)
@@ -70,12 +75,12 @@ Se RSI fizer topo menor mas preço continuar forte → **não entra sem confirma
 ### **🔍 ENTRADA A (PRINCIPAL):**
 - [ ] **Supertrend:** Mesma direção no timeframe maior
 - [ ] **Tendência:** Semanal alinhada
-- [ ] **RSI:** No canal de resistência/suporte
-- [ ] **STOCH RSI:** No contra fundo/topo da tendência no timeframe MENOR (inverso da tendência)
+- [ ] **RSI:** No canal de resistência/suporte -> Peso maior para o timeframe MAIORES
+- [ ] **STOCH RSI:** No contra fundo/topo da tendência, no timeframe MENOR! (inverso da tendência)
 - [ ] **Risk/Reward:** Mínimo 1:2 (usando fibo-extension 0.328 como take profit)
 
 ### **⚡ EXECUÇÃO:**
-- [ ] **Stop Loss:** Abaixo/Acima 0.618 ou swing high/low
+- [ ] **Stop Loss:** Extremo do Canal do RSI, MA 50/100/200, Extensao de Fibonnaci e Inversao do Supertrend. TUDO CONFORME ESTRUTURA DO MERCADO.
 - [ ] **Take Profits:** 0.382 / 0.236 / 0.0 (extensão)
 - [ ] **Posição:** Máx 2% risco
 
