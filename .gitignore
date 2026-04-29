@@ -1,0 +1,151 @@
+# Python Virtual Environments
+venv/
+env/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+.env.keys
+
+# Python Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Testing & Coverage
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+htmlcov/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+.vscode/settings.json.backup
+.vscode/*.backup
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+error.log
+access.log
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Sensitive data - NEVER COMMIT THESE
+.private/
+secrets/
+config/private/
+keys/
+private_keys/
+certificates/
+ssl/
+
+# API Keys & Credentials
+*.key
+*.pem
+*.p12
+*.pfx
+api_keys.txt
+credentials.json
+secrets.json
+config/keys.py
+config/api_keys.py
+config/credentials.py
+
+# API Keys & Tokens (additional patterns)
+*api_key*
+*secret*
+*token*
+*password*
+*credential*
+
+# Data files with sensitive information
+data/*.csv
+data/*.json
+data/*.xlsx
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+
+# Cache and temporary files
+cache/
+tmp/
+temp/
+
+# Backup files
+*.bak
+*.backup
+*.old
