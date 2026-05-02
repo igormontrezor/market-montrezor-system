@@ -42,7 +42,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo Executando GEMS FINDER v6.0 - OTIMIZADO e 100%% FUNCIONAL...
+echo Executando MARKET ANALYZER v6.0 - OTIMIZADO e 100%% FUNCIONAL...
 echo    - Cache 12 horas: Consistente, sem arquivos duplicados
 echo    - YouTube API REAL: datetime.UTC corrigido, publishedAfter valido
 echo    - Telegram Scraping REAL: Regex boundaries, sem falsos positivos
@@ -64,7 +64,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo GEMS FINDER v6.0 CONCLUIDO!
+echo MARKET ANALYZER v6.0 CONCLUIDO!
 echo.
 echo Sistema de Cache Consistente:
 echo    - Duracao: 12 horas (respeitado)

@@ -1,72 +1,150 @@
-# Market Montrezor System v3.1
+# 🚀 MARKET ANALYZER - Crypto Gems System
 
-🚀 **Sistema avançado de análise de mercado com GEMS Finder e Social Intelligence**
-
----
-
-## 🎯 **Visão Geral**
-
-Sistema completo para análise de mercado financeiro com duas principais funcionalidades:
-
-### 💎 **GEMS System v3.1**
-- **GEMS Finder**: Identificação de criptomoedas de alto potencial
-- **Social Validation**: Análise social inteligente (YouTube + Telegram)
-- **Multi-Timeframe**: Análise em 3, 7 e 14 dias
-- **Cache Otimizado**: 12 horas para economia de API
-
-### 📊 **Analysis System**
-- **Indicadores Técnicos**: RSI, MACD, Bollinger Bands, SMA, EMA
-- **Sinais de Trading**: Automatizados com limiares personalizáveis
-- **Visualizações Avançadas**: Gráficos interativos e candlestick
-- **Gestão de Portfólio**: Acompanhamento múltiplos ativos
+**Advanced cryptocurrency analysis system specialized in finding low market cap gems with high potential.**
 
 ---
 
-## 🚀 **Quick Start - GEMS System**
+## 🇺🇸 English
 
-### Instalação
+### 📋 Overview
+MARKET ANALYZER is a sophisticated cryptocurrency analysis platform designed to identify promising low market cap tokens (gems) with significant growth potential. The system combines technical analysis, social intelligence, and multi-timeframe persistence tracking to provide comprehensive market insights.
+
+### ✨ Key Features
+- **Multi-Timeframe Analysis**: Tracks gems across 3, 7, and 14-day persistence periods
+- **Social Intelligence**: Real-time YouTube API and Telegram scraping for sentiment analysis
+- **Technical Scoring**: Advanced quantitative and social scoring algorithms
+- **Interactive Dashboard**: Plotly-based visualization with comprehensive metrics
+- **Smart Filtering**: Zone-based classification (Early Accumulation, Strong, Breakout)
+- **Persistence Tracking**: Cumulative counters for consistent performers
+- **Leader Identification**: Automated detection of confirmed market leaders
+
+### �️ Tech Stack
+- **Python 3.12+** with pandas, plotly, requests
+- **Data Sources**: CoinMarketCap API, YouTube API, Telegram scraping
+- **Storage**: CSV snapshots + JSON daily data
+- **Visualization**: Interactive Plotly dashboards
+- **Caching**: 12-hour intelligent cache system
+
+### 🚀 Quick Start
 ```bash
-# Clonar repositório
-git clone https://github.com/igormontrezor/market-system-montrezor.git
-cd market-system-montrezor
+# Clone and setup
+git clone https://github.com/igormontrezor/market-analyzer-crypto-gems.git
+cd market-analyzer-crypto-gems/gems_system
 
-# Criar ambiente virtual
+# Run analysis
+python gems_finder.py
+
+# View results
+python visualizer.py
+```
+
+---
+
+## 🇧🇷 Português
+
+### 📋 Visão Geral
+MARKET ANALYZER é uma plataforma sofisticada de análise de criptomoedas projetada para identificar tokens de baixa capitalização (gems) com significativo potencial de crescimento. O sistema combina análise técnica, inteligência social e rastreamento de persistência multi-timeframe para fornecer insights completos do mercado.
+
+### ✨ Recursos Principais
+- **Análise Multi-Timeframe**: Rastreia gems em períodos de persistência de 3, 7 e 14 dias
+- **Inteligência Social**: API YouTube e scraping Telegram em tempo real para análise de sentimento
+- **Scoring Técnico**: Algoritmos avançados de scoring quantitativo e social
+- **Dashboard Interativo**: Visualização baseada em Plotly com métricas completas
+- **Filtragem Inteligente**: Classificação baseada em zonas (Early Accumulation, Strong, Breakout)
+- **Rastreamento de Persistência**: Contadores cumulativos para performers consistentes
+- **Identificação de Líderes**: Detecção automatizada de líderes confirmados de mercado
+
+### 🛠️ Stack Tecnológico
+- **Python 3.12+** com pandas, plotly, requests
+- **Fontes de Dados**: CoinMarketCap API, YouTube API, scraping Telegram
+- **Armazenamento**: Snapshots CSV + dados diários JSON
+- **Visualização**: Dashboards interativos Plotly
+- **Cache**: Sistema inteligente de cache de 12 horas
+
+### 🚀 Início Rápido
+```bash
+# Clonar e configurar
+git clone https://github.com/igormontrezor/market-analyzer-crypto-gems.git
+cd market-analyzer-crypto-gems/gems_system
+
+# Executar análise
+python gems_finder.py
+
+# Visualizar resultados
+python visualizer.py
+```
+
+---
+
+## � Project Structure
+
+```
+market-analyzer-crypto-gems/
+├── gems_system/              # Main analysis system
+│   ├── gems_finder.py        # Core analysis engine
+│   ├── visualizer.py         # Interactive dashboard
+│   ├── persistence_tracker.py # Persistence tracking
+│   ├── social_analyzer_yt_telegram.py  # Social intelligence
+│   ├── data/                 # Data storage
+│   │   ├── snapshots/        # CSV analysis files
+│   │   └── daily_snapshots/  # JSON daily data
+│   └── guide/                # Documentation
+├── analysis_system/          # Technical analysis module
+├── config/                   # Configuration files
+└── README.md
+```
+
+## 🚀 Installation & Setup
+
+### Prerequisites
+- Python 3.12+
+- CoinMarketCap API key
+- YouTube API key (optional)
+
+### Quick Setup
+```bash
+# Clone repository
+git clone https://github.com/igormontrezor/market-analyzer-crypto-gems.git
+cd market-analyzer-crypto-gems
+
+# Create virtual environment
 python -m venv .venv
 
-# Ativar ambiente virtual
+# Activate environment
 # Windows
 .venv\Scripts\activate
 # Linux/Mac
 source .venv/bin/activate
 
-# Instalar dependências
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### Executar GEMS Finder
+### Configuration
 ```bash
-# Windows Batch
-cd gems_system
-run.bat
+# Set API keys
+# Windows
+set CMC_API_KEY=your_key_here
+set YOUTUBE_API_KEY=your_key_here
 
-# Windows PowerShell
-cd gems_system
-run.ps1
-
-# Python direto
-cd gems_system
-python gems_finder.py
+# Linux/Mac
+export CMC_API_KEY=your_key_here
+export YOUTUBE_API_KEY=your_key_here
 ```
 
----
-
-## 💎 **GEMS System Features**
+## 🎯 System Features
 
 ### 🧠 **Social Intelligence**
-- **YouTube API**: Análise com nomes completos (sem falsos positivos)
-- **Telegram**: Canais com pesos inteligentes (sem spam/pump)
-- **Validação Social**: Só analisa com sinais técnicos fortes
-- **Métricas**: YouTube Velocity + Telegram Spike
+- **YouTube API**: Real-time sentiment analysis with accurate search
+- **Telegram Scraping**: Channel analysis with intelligent weighting
+- **Social Validation**: Combined with technical signals for accuracy
+- **Velocity Metrics**: YouTube engagement + Telegram activity tracking
+
+### 📊 **Technical Analysis**
+- **Multi-Timeframe**: 3, 7, 14-day persistence tracking
+- **Zone Classification**: Early Accumulation, Strong, Breakout detection
+- **Scoring Algorithm**: Quantitative + social composite scoring
+- **Leader Detection**: Automated market leader identification
 
 ### 📊 **Multi-Timeframe Analysis**
 - **Short Term**: 1 dia (spikes e momentum)
