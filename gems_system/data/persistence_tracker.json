@@ -12,7 +12,7 @@
     "count_7d": 0,
     "count_14d": 0,
     "first_seen": "20260502",
-    "last_seen": "20260502",
+    "last_seen": "20260503",
     "max_persistence": 0
   },
   "bome": {
@@ -20,7 +20,7 @@
     "count_7d": 0,
     "count_14d": 0,
     "first_seen": "20260502",
-    "last_seen": "20260502",
+    "last_seen": "20260503",
     "max_persistence": 0
   },
   "rez": {
@@ -28,7 +28,7 @@
     "count_7d": 0,
     "count_14d": 0,
     "first_seen": "20260502",
-    "last_seen": "20260502",
+    "last_seen": "20260503",
     "max_persistence": 0
   },
   "ustc": {
@@ -36,7 +36,7 @@
     "count_7d": 0,
     "count_14d": 0,
     "first_seen": "20260502",
-    "last_seen": "20260502",
+    "last_seen": "20260503",
     "max_persistence": 0
   },
   "not": {
@@ -44,7 +44,7 @@
     "count_7d": 0,
     "count_14d": 0,
     "first_seen": "20260502",
-    "last_seen": "20260502",
+    "last_seen": "20260503",
     "max_persistence": 0
   },
   "ssv": {
@@ -52,7 +52,7 @@
     "count_7d": 0,
     "count_14d": 0,
     "first_seen": "20260502",
-    "last_seen": "20260502",
+    "last_seen": "20260503",
     "max_persistence": 0
   },
   "edu": {
@@ -60,7 +60,7 @@
     "count_7d": 0,
     "count_14d": 0,
     "first_seen": "20260502",
-    "last_seen": "20260502",
+    "last_seen": "20260503",
     "max_persistence": 0
   },
   "usdp": {
@@ -68,7 +68,7 @@
     "count_7d": 0,
     "count_14d": 0,
     "first_seen": "20260502",
-    "last_seen": "20260502",
+    "last_seen": "20260503",
     "max_persistence": 0
   },
   "upeg": {
@@ -84,7 +84,7 @@
     "count_7d": 0,
     "count_14d": 0,
     "first_seen": "20260502",
-    "last_seen": "20260502",
+    "last_seen": "20260503",
     "max_persistence": 0
   },
   "chillguy": {
@@ -100,7 +100,7 @@
     "count_7d": 0,
     "count_14d": 0,
     "first_seen": "20260502",
-    "last_seen": "20260502",
+    "last_seen": "20260503",
     "max_persistence": 0
   },
   "goat": {
@@ -108,7 +108,7 @@
     "count_7d": 0,
     "count_14d": 0,
     "first_seen": "20260502",
-    "last_seen": "20260502",
+    "last_seen": "20260503",
     "max_persistence": 0
   },
   "broccoli": {
@@ -116,7 +116,7 @@
     "count_7d": 0,
     "count_14d": 0,
     "first_seen": "20260502",
-    "last_seen": "20260502",
+    "last_seen": "20260503",
     "max_persistence": 0
   },
   "vine": {
@@ -124,7 +124,7 @@
     "count_7d": 0,
     "count_14d": 0,
     "first_seen": "20260502",
-    "last_seen": "20260502",
+    "last_seen": "20260503",
     "max_persistence": 0
   },
   "alice": {
@@ -140,7 +140,7 @@
     "count_7d": 0,
     "count_14d": 0,
     "first_seen": "20260502",
-    "last_seen": "20260502",
+    "last_seen": "20260503",
     "max_persistence": 0
   },
   "maga": {
@@ -148,7 +148,7 @@
     "count_7d": 0,
     "count_14d": 0,
     "first_seen": "20260502",
-    "last_seen": "20260502",
+    "last_seen": "20260503",
     "max_persistence": 0
   },
   "dogs": {
@@ -156,7 +156,7 @@
     "count_7d": 0,
     "count_14d": 0,
     "first_seen": "20260502",
-    "last_seen": "20260502",
+    "last_seen": "20260503",
     "max_persistence": 0
   },
   "pond": {
@@ -164,7 +164,39 @@
     "count_7d": 0,
     "count_14d": 0,
     "first_seen": "20260502",
-    "last_seen": "20260502",
+    "last_seen": "20260503",
+    "max_persistence": 0
+  },
+  "merl": {
+    "count_3d": 0,
+    "count_7d": 0,
+    "count_14d": 0,
+    "first_seen": "20260503",
+    "last_seen": "20260503",
+    "max_persistence": 0
+  },
+  "snek": {
+    "count_3d": 0,
+    "count_7d": 0,
+    "count_14d": 0,
+    "first_seen": "20260503",
+    "last_seen": "20260503",
+    "max_persistence": 0
+  },
+  "meme": {
+    "count_3d": 0,
+    "count_7d": 0,
+    "count_14d": 0,
+    "first_seen": "20260503",
+    "last_seen": "20260503",
+    "max_persistence": 0
+  },
+  "people": {
+    "count_3d": 0,
+    "count_7d": 0,
+    "count_14d": 0,
+    "first_seen": "20260503",
+    "last_seen": "20260503",
     "max_persistence": 0
   }
 }
