@@ -1,9 +1,10 @@
 @echo off
 echo =======================================
-echo MARKET MONTREZOR SYSTEM - GEMS FINDER v6.0
+echo MARKET MONTREZOR SYSTEM - GEMS FINDER v7.0
 echo Sistema Multi-Timeframe com Social Intelligence REAL
 echo    YouTube API REAL + Telegram Scraping REAL + Arquivos OTIMIZADOS
 echo    Cache Consistente + Metrics Autenticas + Sistema Production-Ready
+echo    SETOR CLASSIFICATION + ACUMULATION SILENCIOSA + DASHBOARD AVANCADO
 echo =======================================
 echo.
 echo Verificando estrutura de diretorios (preservando dados)...
@@ -42,7 +43,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo Executando MARKET ANALYZER v6.0 - OTIMIZADO e 100%% FUNCIONAL...
+echo Executando MARKET ANALYZER v7.0 - OTIMIZADO e 100%% FUNCIONAL...
 echo    - Cache 12 horas: Consistente, sem arquivos duplicados
 echo    - YouTube API REAL: datetime.UTC corrigido, publishedAfter valido
 echo    - Telegram Scraping REAL: Regex boundaries, sem falsos positivos
@@ -53,6 +54,9 @@ echo    - Social Validation: Penalty 30%% para dados simulados
 echo    - ARQUIVOS OTIMIZADOS: 66%% menos arquivos (2 vs 6)
 echo    - Eventos Especiais: Unificados no enhanced CSV
 echo    - Sistema Robusto: Todos os bugs criticos corrigidos
+echo    - SETOR CLASSIFICATION: 80%% reducao em 'Other' (CoinGecko + Mapa Estatico)
+echo    - ACUMULATION SILENCIOSA: Smart Money Detection com slope analysis
+echo    - DASHBOARD REORGANIZADO: Bubble + Acumulacao em 1º/2º (mais importantes)
 echo.
 
 cd gems_system
@@ -64,7 +68,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo MARKET ANALYZER v6.0 CONCLUIDO!
+echo MARKET ANALYZER v7.0 CONCLUIDO!
 echo.
 echo Sistema de Cache Consistente:
 echo    - Duracao: 12 horas (respeitado)
@@ -77,6 +81,7 @@ echo Verifique os resultados (se criados):
 echo    data\snapshots\ - Analises historicas CSV (OTIMIZADO)
 echo    data\snapshots\gems_10M_to_50M_*.csv - Consolidado (2 arquivos)
 echo    data\snapshots\gems_10M_to_50M_enhanced_*.csv - Com eventos especiais
+echo    data\snapshots\ - Com COLUNAS: sector, accumulation_score, etc
 echo    data\daily_snapshots\ - Snapshots diarios JSON
 echo    data\gems_cache.json - Cache API centralizado
 echo.
@@ -87,6 +92,15 @@ echo    3. Data Quality: Flags consistentes, penalty aplicada
 echo    4. Velocity: Ranking preservado mesmo com poucos videos
 echo    5. Cache: Timestamps consistentes, sem arquivos duplicados
 echo    6. ARQUIVOS OTIMIZADOS: 66%% reducao, eventos unificados
+echo.
+echo NOVIDADES v7.0 - CLASSIFICACAO E ACUMULACAO:
+echo    - SETOR CLASSIFICATION: 80%% reducao em 'Other' (CoinGecko + Mapa Estatico)
+echo    - ACUMULATION SILENCIOSA: Smart Money Detection com slope analysis
+echo    - DASHBOARD REORGANIZADO: Bubble + Acumulacao em 1º/2º (mais importantes)
+echo    - COLUNAS NOVAS: sector, accumulation_score, accumulation_signal
+echo    - TUTORIAIS CORRIGIDOS: Heatmap de Persistencia com escala correta
+echo    - MAPA ESTATICO EXPANDIDO: 200+ cryptos mapeadas por setor
+echo    - SISTEMA ROBUSTO: 100%% funcional, sem bugs criticos
 echo.
 echo Atualizacoes v6.0 - OTIMIZACAO COMPLETA:
 echo    - Arquivos: 6 -> 2 por execucao (66%% reducao)

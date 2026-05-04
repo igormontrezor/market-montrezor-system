@@ -1,12 +1,13 @@
 # ========================================
-# MARKET MONTREZOR SYSTEM - GEMS FINDER v6.0
+# MARKET MONTREZOR SYSTEM - GEMS FINDER v7.0
 # ========================================
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "MARKET MONTREZOR SYSTEM - GEMS FINDER v6.0" -ForegroundColor Cyan
+Write-Host "MARKET MONTREZOR SYSTEM - GEMS FINDER v7.0" -ForegroundColor Cyan
 Write-Host "Sistema Multi-Timeframe com Social Intelligence REAL" -ForegroundColor Yellow
 Write-Host "   YouTube API REAL + Telegram Scraping REAL + Arquivos OTIMIZADOS" -ForegroundColor White
 Write-Host "   Cache Consistente + Metrics Autenticas + Sistema Production-Ready" -ForegroundColor White
+Write-Host "   SETOR CLASSIFICATION + ACUMULATION SILENCIOSA + DASHBOARD AVANCADO" -ForegroundColor White
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -57,7 +58,7 @@ try {
     exit
 }
 
-Write-Host "Executando GEMS FINDER v6.0 - OTIMIZADO e 100% FUNCIONAL..." -ForegroundColor Yellow
+Write-Host "Executando GEMS FINDER v7.0 - OTIMIZADO e 100% FUNCIONAL..." -ForegroundColor Yellow
 Write-Host "   - Cache 12 horas: Consistente, sem arquivos duplicados" -ForegroundColor Cyan
 Write-Host "   - YouTube API REAL: datetime.UTC corrigido, publishedAfter valido" -ForegroundColor Cyan
 Write-Host "   - Telegram Scraping REAL: Regex boundaries, sem falsos positivos" -ForegroundColor Cyan
@@ -68,6 +69,9 @@ Write-Host "   - Social Validation: Penalty 30% para dados simulados" -Foregroun
 Write-Host "   - ARQUIVOS OTIMIZADOS: 66% menos arquivos (2 vs 6)" -ForegroundColor Cyan
 Write-Host "   - Eventos Especiais: Unificados no enhanced CSV" -ForegroundColor Cyan
 Write-Host "   - Sistema Robusto: Todos os bugs criticos corrigidos" -ForegroundColor Cyan
+Write-Host "   - SETOR CLASSIFICATION: 80% reducao em 'Other' (CoinGecko + Mapa Estatico)" -ForegroundColor Cyan
+Write-Host "   - ACUMULATION SILENCIOSA: Smart Money Detection com slope analysis" -ForegroundColor Cyan
+Write-Host "   - DASHBOARD REORGANIZADO: Bubble + Acumulacao em 1º/2º (mais importantes)" -ForegroundColor Cyan
 Write-Host ""
 
 # Ir para gems_system e executar
@@ -75,7 +79,7 @@ Set-Location "gems_system"
 try {
     python gems_finder.py
     Write-Host "" -ForegroundColor White
-    Write-Host "GEMS FINDER v6.0 CONCLUIDO!" -ForegroundColor Green
+    Write-Host "GEMS FINDER v7.0 CONCLUIDO!" -ForegroundColor Green
     Write-Host "" -ForegroundColor White
 
     Write-Host "Sistema de Cache Consistente:" -ForegroundColor Yellow
@@ -90,6 +94,7 @@ try {
     Write-Host "   data\snapshots\ - Analises historicas CSV (OTIMIZADO)" -ForegroundColor White
     Write-Host "   data\snapshots\gems_10M_to_50M_*.csv - Consolidado (2 arquivos)" -ForegroundColor White
     Write-Host "   data\snapshots\gems_10M_to_50M_enhanced_*.csv - Com eventos especiais" -ForegroundColor White
+Write-Host "   data\snapshots\ - Com COLUNAS: sector, accumulation_score, etc" -ForegroundColor White
     Write-Host "   data\daily_snapshots\ - Snapshots diarios JSON" -ForegroundColor White
     Write-Host "   data\gems_cache.json - Cache API centralizado" -ForegroundColor White
     Write-Host "" -ForegroundColor White
@@ -103,7 +108,17 @@ try {
     Write-Host "   6. ARQUIVOS OTIMIZADOS: 66% reducao, eventos unificados" -ForegroundColor White
     Write-Host "" -ForegroundColor White
 
-    Write-Host "Atualizacoes v6.0 - OTIMIZACAO COMPLETA:" -ForegroundColor Green
+    Write-Host "NOVIDADES v7.0 - CLASSIFICACAO E ACUMULACAO:" -ForegroundColor Green
+Write-Host "   - SETOR CLASSIFICATION: 80% reducao em 'Other' (CoinGecko + Mapa Estatico)" -ForegroundColor White
+Write-Host "   - ACUMULATION SILENCIOSA: Smart Money Detection com slope analysis" -ForegroundColor White
+Write-Host "   - DASHBOARD REORGANIZADO: Bubble + Acumulacao em 1º/2º (mais importantes)" -ForegroundColor White
+Write-Host "   - COLUNAS NOVAS: sector, accumulation_score, accumulation_signal" -ForegroundColor White
+Write-Host "   - TUTORIAIS CORRIGIDOS: Heatmap de Persistencia com escala correta" -ForegroundColor White
+Write-Host "   - MAPA ESTATICO EXPANDIDO: 200+ cryptos mapeadas por setor" -ForegroundColor White
+Write-Host "   - SISTEMA ROBUSTO: 100% funcional, sem bugs criticos" -ForegroundColor White
+Write-Host "" -ForegroundColor White
+
+Write-Host "Atualizacoes v6.0 - OTIMIZACAO COMPLETA:" -ForegroundColor Green
     Write-Host "   - Arquivos: 6 -> 2 por execucao (66% reducao)" -ForegroundColor White
     Write-Host "   - Eventos Especiais: Unificados no enhanced CSV" -ForegroundColor White
     Write-Host "   - Colunas Novas: persistence_days, is_confirmed_leader, rs_strong" -ForegroundColor White

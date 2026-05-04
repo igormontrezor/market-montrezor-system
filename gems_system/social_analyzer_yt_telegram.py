@@ -72,6 +72,7 @@ class SocialAnalyzerYTTelegram:
 
         # ✅ VERIFICAÇÃO DE QUALIDADE DE DADOS - Apenas YouTube
         youtube_quality = youtube_data.get('data_source', 'unknown')
+        telegram_quality = telegram_data.get('data_source', 'unknown')
 
         # ✅ PENALIZAÇÃO PARA DADOS SIMULADOS - Apenas YouTube
         if youtube_quality == 'simulation':

@@ -9,6 +9,16 @@ import json
 import os
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
+from accumulation_sector import (
+    SilentAccumulationDetector,
+    SectorCorrelationAnalyzer,
+    enrich_gems_with_accumulation,
+    build_sector_snapshot,
+    load_sector_historical,
+    print_accumulation_report,
+    print_sector_report,
+    get_sector,
+)
 
 class GemsFinder:
 
@@ -38,6 +48,10 @@ class GemsFinder:
                 self.social_analyzer = None
         self.confirmed_gems_file = os.path.join(self.cache_dir, 'confirmed_gems.json')
         self.new_candidates_file = os.path.join(self.cache_dir, 'new_candidates.json')
+
+        # Módulos de acumulação e setor
+        self.accumulation_detector  = SilentAccumulationDetector()
+        self.sector_analyzer        = SectorCorrelationAnalyzer()
 
     def load_cache(self) -> Optional[Dict[str, Any]]:
         """Carrega dados do cache se ainda for válido"""
@@ -1114,41 +1128,66 @@ class GemsFinder:
                     persistence = timeframe_analysis.get('medium_term', {}).get('persistence_days', 0)
                     print(f"  🌟 {leader['symbol']}: {persistence} dias, MC=${leader['market_cap']:,}")
 
-            gold_gems = [g for g in all_gems_list if g.get('is_gold', False)]
-            if gold_gems:
-                print(f"\n👑 {len(gold_gems)} GEMS 'OURO PURO' encontradas!")
-                print("🎯 Características: Pullback saudável + Volume real (>0.7x MC)")
-                for gold in gold_gems[:5]:  # Top 5 ouro
-                    print(f"  🏆 {gold['symbol']}: MC=${gold['market_cap']:,}, Vol=${gold.get('total_volume', 0):,}")
+            # ── Enriquecer com setor ──────────────────────────────────────────
+            for gem in all_gems_list:
+                gem['sector'] = get_sector(
+                    gem.get('symbol', '').lower(),
+                    gem.get('categories', [])
+                )
+
+            # ── 1. ACUMULAÇÃO SILENCIOSA ──────────────────────────────────────
+            historical_data_full = self.load_historical_snapshots(days=30)
+            if historical_data_full:
+                all_gems_list = enrich_gems_with_accumulation(
+                    all_gems_list,
+                    historical_data_full,
+                    self.accumulation_detector
+                )
+                print_accumulation_report(all_gems_list)
             else:
-                print(f"\n⚠️ Nenhuma gem 'OURO PURO' encontrada hoje")
+                for gem in all_gems_list:
+                    gem['accumulation_score']     = 0.0
+                    gem['accumulation_signal']    = 'none'
+                    gem['accumulation_slope']     = 0.0
+                    gem['is_silent_accumulation'] = False
+                    gem['accumulation_reason']    = 'Histórico insuficiente'
 
-            print(f"\n🔥 Buscando LÍDERES com força sustentada (não spikes)")
+            # ── 2. CORRELAÇÃO SETORIAL ───────────────────────────────────────
+            sector_snapshots = load_sector_historical(
+                self.snapshots_dir, days=14
+            )
+            # Adicionar snapshot atual ao histórico setorial
+            sector_snapshots.append(build_sector_snapshot(all_gems_list))
 
-            if all_gems_list:
-                # Salvar snapshot único consolidado
-                self.save_daily_snapshot(all_gems_list)
+            sector_result = self.sector_analyzer.analyze_historical(sector_snapshots)
+            print_sector_report(sector_result)
 
-                # Analisar crescimento e identificar líderes
-                confirmed_leaders, new_potentials = self.analyze_growth(all_gems_list)
+            # Guardar resultado para salvar no enhanced snapshot
+            self._last_sector_result = sector_result
 
-                # Processar líderes confirmados
-                if confirmed_leaders:
-                    self.update_confirmed_gems(confirmed_leaders)
-                    print(f"\n🔥 {len(confirmed_leaders)} LÍDERES DE ALTSEASON confirmados!")
-                    for leader in confirmed_leaders:
-                        print(f"  🚀 {leader['symbol']}: {leader['priority'].upper()} - {leader['growth_percent']:.1f}% crescimento ({leader['strong_days']} dias fortes)")
-                else:
-                    print("\n⏳ Nenhum líder confirmado hoje (sem persistência suficiente)")
+            # ── Salvar snapshot único consolidado ─────────────────────────────
+            self.save_daily_snapshot(all_gems_list)
 
-                # Processar potenciais líderes
-                if new_potentials:
-                    self.update_new_candidates(new_potentials)
-                    print(f"\n🚀 {len(new_potentials)} POTENCIAIS LÍDERES detectados!")
-                    for potential in new_potentials:
-                        print(f"  ⭐ {potential['symbol']}: {potential['priority'].upper()} - ratio {potential['ratio_now']:.2f} (nova entrada)")
-                else:
-                    print("\n📊 Nenhum potencial líder detectado hoje")
+            # ── Análise de crescimento e líderes (lógica original) ────────────
+            confirmed_leaders, new_potentials = self.analyze_growth(all_gems_list)
+
+            if confirmed_leaders:
+                self.update_confirmed_gems(confirmed_leaders)
+                print(f"\n🔥 {len(confirmed_leaders)} LÍDERES DE ALTSEASON confirmados!")
+                for leader in confirmed_leaders:
+                    print(f"  🚀 {leader['symbol']}: {leader['priority'].upper()} - "
+                          f"{leader['growth_percent']:.1f}% crescimento ({leader['strong_days']} dias fortes)")
+            else:
+                print("\n⏳ Nenhum líder confirmado hoje (sem persistência suficiente)")
+
+            if new_potentials:
+                self.update_new_candidates(new_potentials)
+                print(f"\n🚀 {len(new_potentials)} POTENCIAIS LÍDERES detectados!")
+                for potential in new_potentials:
+                    print(f"  ⭐ {potential['symbol']}: {potential['priority'].upper()} - "
+                          f"ratio {potential['ratio_now']:.2f} (nova entrada)")
+            else:
+                print("\n📊 Nenhum potencial líder detectado hoje")
 
         return all_gems, new_data_found
 
@@ -1433,6 +1472,17 @@ class GemsFinder:
                 x['final_score']                        # Score por último
             ), reverse=True)
 
+            # ── Colunas de acumulação silenciosa ─────────────────────────────────
+            for gem in final_gems:
+                gem.setdefault('accumulation_score',     0.0)
+                gem.setdefault('accumulation_signal',    'none')
+                gem.setdefault('accumulation_slope',     0.0)
+                gem.setdefault('is_silent_accumulation', False)
+                gem.setdefault('sector',                 'Other')
+
+            # ── Colunas de setor (já populadas em find_gems_by_ranges) ───────────
+            # (nada extra a fazer aqui — sector já está em cada gem)
+
             # 🎯 Enriquecer com colunas de eventos especiais
             for gem in final_gems:
                 # 📊 Persistência (referência visual)
@@ -1506,6 +1556,16 @@ class GemsFinder:
             print(f"  👑 Líderes confirmados: {confirmed_count}")
             print(f"  🔥 Explosões sociais: {social_count}")
             print(f"  💪 RS vs BTC forte: {rs_count}")
+
+            # ── Resumo setorial no terminal ───────────────────────────────────────
+            sector_result = getattr(self, '_last_sector_result', None)
+            if sector_result:
+                hot  = sector_result.get('hot_sectors', [])
+                warm = sector_result.get('warming_sectors', [])
+                alert= sector_result.get('current_alert', 'COLD')
+                print(f"\n🏭 RESUMO SETORIAL: {alert} | "
+                      f"Setores quentes: {', '.join(hot) if hot else 'nenhum'} | "
+                      f"Aquecendo: {', '.join(s['sector'] for s in warm[:3])}")
 
     def analyze_gems(self, gems: List[Dict[str, Any]]) -> None:
         """Análise detalhada das gems encontradas"""
