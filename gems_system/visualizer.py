@@ -77,16 +77,20 @@ def build_global_evolution_block(reference_dfs, snapshot_info):
             if not symbol:
                 continue
 
-            score   = float(row[score_col])          if pd.notna(row.get(score_col))                    else 0
-            mc      = float(row['market_cap'])        if pd.notna(row.get('market_cap'))                 else 0
-            volume  = float(row['total_volume'])      if pd.notna(row.get('total_volume'))               else 0
-            change  = float(row['price_change_percentage_24h']) if pd.notna(row.get('price_change_percentage_24h')) else 0
+            score   = float(row[score_col])                      if pd.notna(row.get(score_col))                         else 0
+            mc      = float(row['market_cap'])                   if pd.notna(row.get('market_cap'))                      else 0
+            volume  = float(row['total_volume'])                 if pd.notna(row.get('total_volume'))                    else 0
+            change  = float(row['price_change_percentage_24h'])  if pd.notna(row.get('price_change_percentage_24h'))     else 0
+            # ✅ CORREÇÃO RS: coletar rs_24h e rs_7d (necessário para Bubble Chart)
+            rs_24h  = float(row['rs_24h']) if pd.notna(row.get('rs_24h')) else None
+            rs_7d   = float(row['rs_7d'])  if pd.notna(row.get('rs_7d'))  else None
             sector  = row.get('sector', 'Unknown')
             category= row.get('category', row.get('timeframe_classification', 'Unknown'))
 
             if symbol not in global_crypto_data:
                 global_crypto_data[symbol] = {
                     'scores': [], 'mcs': [], 'volumes': [], 'changes_24h': [],
+                    'rs_24h': [], 'rs_7d': [],
                     'periods_present': [], 'total_periods': len(global_dfs),
                     'sector': sector, 'category': category
                 }
@@ -95,6 +99,10 @@ def build_global_evolution_block(reference_dfs, snapshot_info):
             global_crypto_data[symbol]['mcs'].append(mc)
             global_crypto_data[symbol]['volumes'].append(volume)
             global_crypto_data[symbol]['changes_24h'].append(change)
+            if rs_24h is not None:
+                global_crypto_data[symbol]['rs_24h'].append(rs_24h)
+            if rs_7d is not None:
+                global_crypto_data[symbol]['rs_7d'].append(rs_7d)
             global_crypto_data[symbol]['periods_present'].append(i)
 
     global_crypto_ranking = []
@@ -140,6 +148,8 @@ def build_global_evolution_block(reference_dfs, snapshot_info):
             'mcs': data['mcs'],
             'volumes': data['volumes'],
             'changes_24h': data['changes_24h'],
+            'rs_24h': data.get('rs_24h', []),   # ✅ para Bubble Chart
+            'rs_7d':  data.get('rs_7d',  []),   # ✅ para Bubble Chart
             'sector': data['sector'],
             'category': data['category']
         })
@@ -158,8 +168,11 @@ def build_global_evolution_block(reference_dfs, snapshot_info):
     # 5. Calcular score_change para o último snapshot selecionado pelo usuário
     last_reference_df = reference_dfs[-1] if reference_dfs else None
     if last_reference_df is not None and len(global_dfs) >= 2:
-        first_scores = dict(zip(global_dfs[0]['symbol'],  global_dfs[0].get('final_score', global_dfs[0].get('ratio', pd.Series()))))
-        last_scores  = dict(zip(global_dfs[-1]['symbol'], global_dfs[-1].get('final_score', global_dfs[-1].get('ratio', pd.Series()))))
+        # ✅ CORREÇÃO 4: .get() não existe em DataFrame — usar verificação de colunas
+        score_col_first = 'final_score' if 'final_score' in global_dfs[0].columns else 'ratio'
+        score_col_last  = 'final_score' if 'final_score' in global_dfs[-1].columns else 'ratio'
+        first_scores = dict(zip(global_dfs[0]['symbol'],  global_dfs[0][score_col_first]))
+        last_scores  = dict(zip(global_dfs[-1]['symbol'], global_dfs[-1][score_col_last]))
         score_changes = []
         for _, row in last_reference_df.iterrows():
             sym = row['symbol']
@@ -191,8 +204,13 @@ def build_global_evolution_block(reference_dfs, snapshot_info):
 def _global_block_html(js_block, summary_html, hall_html):
     """Retorna o HTML completo do bloco global de evolução com tutoriais."""
     return f"""
-    <div style="background-color: #ecf0f1; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
-        <h3>📈 ANÁLISE HISTÓRICA GLOBAL (todos os snapshots)</h3>
+    <div style="background: white; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px 12px 0 0;">
+            <h3 style="margin: 0; font-size: 1.4em;">📈 ANÁLISE HISTÓRICA GLOBAL</h3>
+            <p style="margin: 5px 0 0 0; opacity: 0.9;">Todos os snapshots • 6 gráficos • Tutoriais completos</p>
+        </div>
+
+        <div style="padding: 20px;">
 
         <!-- Gráfico 1: Bubble Chart (MAIS IMPORTANTE) -->
         <div id="bubble-chart" style="margin-top: 30px;"></div>
@@ -204,13 +222,65 @@ def _global_block_html(js_block, summary_html, hall_html):
                 <li><strong>X (horizontal):</strong> Market Cap - tamanho da moeda</li>
                 <li><strong>Y (vertical):</strong> Ratio Volume/MC - interesse real</li>
                 <li><strong>Tamanho da bolha:</strong> Volume total negociado</li>
+                <li><strong>COR DA BOLHA:</strong> Força vs BTC (PROTEÇÃO CONTRA QUEDAS)</li>
             </ul>
-            <p style="margin-bottom: 10px;"><strong>Quadrantes valiosos:</strong></p>
+            <p style="margin-bottom: 10px;"><strong>Cores - RS vs BTC:</strong></p>
             <ul style="margin-left: 20px; margin-bottom: 10px;">
-                <li><strong>🔥 Superior Esquerdo:</strong> MC baixo + Ratio alto = OURO PURO!</li>
-                <li><strong>🚀 Inferior Direito:</strong> MC alto + Ratio baixo = dinheiro dormindo</li>
+                <li><strong>🟢 Verde forte:</strong> Muito forte vs BTC (+20% ou mais)</li>
+                <li><strong>🟢 Verde:</strong> Forte vs BTC (+5% a +20%)</li>
+                <li><strong>🟠 Laranja:</strong> Neutro vs BTC (±5%)</li>
+                <li><strong>🟠 Laranja escuro:</strong> Fraco vs BTC (-5% a -20%)</li>
+                <li><strong>🔴 Vermelho:</strong> Muito fraco vs BTC (-20% ou mais)</li>
             </ul>
-            <p style="margin-bottom: 0;"><strong>Exemplo prático:</strong>Bolhas que sobem gradualmente no eixo do ratio, aumentam de tamanho de forma consistente e mantêm posição ao longo do tempo indicam entrada sustentável de capital — candidatas reais a liderança.</p>
+            <p style="margin-bottom: 15px;"><strong>🎯 COMO LER O BUBBLE CHART:</strong></p>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #1a7a3c;">
+                <p style="margin: 0 0 8px 0;">
+                    <span style="display:inline-block;width:14px;height:14px;background-color:#1a7a3c;border-radius:50%;margin-right:10px;vertical-align:middle;"></span>
+                    <strong style="vertical-align:middle;">Superior Esquerdo VERDE → ENTRAR AGORA</strong>
+                </p>
+                <p style="margin: 0; font-size: 14px; color: #666;">
+                    MC baixo + Ratio alto + RS vs BTC positivo = OURO PURO
+                </p>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #2ecc71;">
+                <p style="margin: 0 0 8px 0;">
+                    <span style="display:inline-block;width:14px;height:14px;background-color:#2ecc71;border-radius:50%;margin-right:10px;vertical-align:middle;"></span>
+                    <strong style="vertical-align:middle;">Inferior Direito VERDE → OBSERVAR</strong>
+                </p>
+                <p style="margin: 0; font-size: 14px; color: #666;">
+                    MC alto + Ratio baixo + RS vs BTC positivo = Seguro contra BTC
+                </p>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #e74c3c;">
+                <p style="margin: 0 0 8px 0;">
+                    <span style="display:inline-block;width:14px;height:14px;background-color:#e74c3c;border-radius:50%;margin-right:10px;vertical-align:middle;"></span>
+                    <strong style="vertical-align:middle;">QUALQUER VERMELHO → EVITAR</strong>
+                </p>
+                <p style="margin: 0; font-size: 14px; color: #666;">
+                    RS vs BTC negativo = Cai mais que BTC em quedas
+                </p>
+            </div>
+
+            <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #27ae60;">
+                <p style="margin: 0 0 8px 0;">
+                    <span style="display:inline-block;width:14px;height:14px;background-color:#27ae60;border-radius:50%;margin-right:10px;vertical-align:middle;"></span>
+                    <strong style="vertical-align:middle;">VALIDAÇÃO EXTRA (só para VERDES)</strong>
+                </p>
+                <p style="margin: 0; font-size: 14px; color: #666;">
+                    • Persistência 7d/14d<br>
+                    • Ratio sustentado (sem spike isolado)
+                </p>
+            </div>
+
+            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 0; border-left: 4px solid #ffc107;">
+                <p style="margin: 0;">
+                    <strong>🧠 FÓRMULA FINAL:</strong> Gem real = MC baixo + Ratio alto + RS positivo + Persistência
+                </p>
+            </div>
+            <p style="margin-bottom: 0;"><strong>Exemplo prático:</strong> Bolhas que sobem gradualmente no eixo do ratio, aumentam de tamanho de forma consistente e mantêm posição ao longo do tempo indicam entrada sustentável de capital — candidatas reais a liderança.</p>
         </div>
 
         <!-- Gráfico 2: Acumulação Silenciosa (2º MAIS IMPORTANTE) -->
@@ -244,7 +314,7 @@ def _global_block_html(js_block, summary_html, hall_html):
                 <li><strong>Vender nos vermelhos escuros:</strong> Realizar lucro no pico</li>
                 <li><strong>Observar laranjas:</strong> Setor em movimento forte</li>
             </ul>
-            <p style="margin-bottom: 0;"><strong>Exemplo prático:</strong>Setores frios devem ser observados para sinais iniciais de entrada de capital. Setores em aquecimento representam as melhores oportunidades de entrada. Setores quentes indicam forte fluxo, mas exigem análise de continuidade ou exaustão antes de decisões.</p>
+            <p style="margin-bottom: 0;"><strong>Exemplo prático:</strong> Setores frios devem ser observados para sinais iniciais de entrada de capital. Setores em aquecimento representam as melhores oportunidades de entrada. Setores quentes indicam forte fluxo, mas exigem análise de continuidade ou exaustão antes de decisões.</p>
         </div>
 
         <!-- Gráfico 4: Heatmap de Persistência -->
@@ -290,8 +360,9 @@ def _global_block_html(js_block, summary_html, hall_html):
             <p style="margin-bottom: 0;"><strong>Exemplo prático:</strong> Uma gem com 15+ dias de consistência é provavelmente uma líder real. Uma com 2-3 dias pode ser apenas um spike.</p>
         </div>
 
-        <div id="ranking-summary"     style="margin-top: 20px;"></div>
-        <div id="hall-of-fame"        style="margin-top: 20px;"></div>
+        <div id="ranking-summary"     style="margin-bottom: 20px;"></div>
+        <div id="hall-of-fame"></div>
+        </div>
     </div>
 
     <script>
@@ -561,19 +632,18 @@ def _open_in_browser(html_content):
 
 
 # ===========================================================================
-# Funções auxiliares — sem alterações de lógica, apenas mantidas aqui
-# para o arquivo ser autossuficiente.
+# Funções auxiliares
 # ===========================================================================
 
 def _fig_to_plotly_newplot_js(fig, div_id):
-    fig_json   = fig.to_plotly_json()
-    data_json  = json.dumps(fig_json.get('data',   []), ensure_ascii=False)
-    layout_json= json.dumps(fig_json.get('layout', {}), ensure_ascii=False)
+    fig_json    = fig.to_plotly_json()
+    data_json   = json.dumps(fig_json.get('data',   []), ensure_ascii=False)
+    layout_json = json.dumps(fig_json.get('layout', {}), ensure_ascii=False)
     return f"Plotly.newPlot('{div_id}', {data_json}, {layout_json}, {{responsive: true}});"
 
 
 def create_all_comparison_charts(top10, snapshot_info, crypto_ranking, dfs, historical_data=None):
-    """Gráficos comparativos: evolução temporal e consistência."""
+    """Gráficos comparativos: evolução temporal, consistência, bubble, persistência, acumulação e setor."""
 
     def get_top5_consistent_cryptos():
         crypto_appearances = {}
@@ -595,11 +665,13 @@ def create_all_comparison_charts(top10, snapshot_info, crypto_ranking, dfs, hist
         scores_timeline  = []
         periods_timeline = []
         for i, df in enumerate(dfs):
-            df_sorted = df.sort_values('final_score', ascending=False).reset_index(drop=True)
+            # ✅ CORREÇÃO 5: verificar coluna antes de usar
+            score_col = 'final_score' if 'final_score' in df.columns else 'ratio'
+            df_sorted = df.sort_values(score_col, ascending=False).reset_index(drop=True)
             df_sorted['_rank'] = df_sorted.index + 1
             row = df_sorted[df_sorted['symbol'] == symbol]
             if not row.empty and int(row.iloc[0]['_rank']) <= 5:
-                scores_timeline.append(float(row.iloc[0]['final_score']))
+                scores_timeline.append(float(row.iloc[0][score_col]))
             else:
                 scores_timeline.append(None)
             periods_timeline.append(f'P{i+1}')
@@ -641,7 +713,7 @@ def create_all_comparison_charts(top10, snapshot_info, crypto_ranking, dfs, hist
         height=400, template='plotly_white'
     )
 
-    # Gráfico 3: Bubble Chart — Ratio vs MC vs Score
+    # Gráfico 3: Bubble Chart
     fig3 = create_bubble_chart(crypto_ranking)
 
     # Gráfico 4: Heatmap de Persistência
@@ -671,26 +743,22 @@ def create_all_comparison_charts(top10, snapshot_info, crypto_ranking, dfs, hist
 
 def create_bubble_chart(crypto_ranking):
     """
-    🫧 Bubble Chart — Ratio vs Market Cap vs Final Score
+    🫧 Bubble Chart — Ratio vs Market Cap vs RS vs BTC
 
-    Eixo X  = Market Cap (escala log para não achatar os menores)
-    Eixo Y  = Ratio Volume/MC  (o filtro central do sistema)
-    Tamanho = Final Score médio (quanto maior a bolha, melhor o score)
-    Cor     = Zona predominante (early_accumulation / strong / breakout / mixed)
-
-    Leitura rápida:
-      - Bolhas grandes no canto superior esquerdo = MC pequeno, ratio alto, score alto
-        → candidatas ideais (alta oportunidade, liquidez real)
-      - Bolhas pequenas no canto inferior direito = MC grande, ratio baixo
-        → ignorar ou monitorar
+    Eixo X  = Market Cap (escala log)
+    Eixo Y  = Ratio Volume/MC
+    Tamanho = Score médio
+    Cor     = Força vs BTC (verde = forte, vermelho = fraca)
     """
 
-    zone_color_map = {
-        'breakout':          '#e74c3c',   # vermelho — máxima prioridade
-        'strong':            '#f39c12',   # laranja  — forte
-        'early_accumulation':'#3498db',   # azul     — acumulação
-        'mixed':             '#9b59b6',   # roxo     — misto
-        'unknown':           '#95a5a6',   # cinza
+    # ✅ CORREÇÃO 1+2+3: RS vs BTC como cor, categorização correta, sem debug print
+    rs_btc_color_map = {
+        'strong':    '#1a7a3c',   # verde escuro  — muito forte vs BTC (≥+20pp)
+        'moderate':  '#2ecc71',   # verde         — forte vs BTC (+5 a +20pp)
+        'neutral':   '#f39c12',   # laranja       — neutro (±5pp)
+        'weak':      '#e67e22',   # laranja escuro — fraco (-5 a -20pp)
+        'very_weak': '#e74c3c',   # vermelho       — muito fraco (≤-20pp)
+        'unknown':   '#95a5a6',   # cinza          — sem dados RS
     }
 
     symbols, x_mc, y_ratio, sizes, colors, hover = [], [], [], [], [], []
@@ -698,7 +766,6 @@ def create_bubble_chart(crypto_ranking):
     for item in crypto_ranking:
         avg_mc    = item.get('avg_mc',    0)
         avg_score = item.get('avg_score', 0)
-        # Ratio médio: recalcula a partir dos volumes e mcs armazenados
         vols = item.get('volumes', [])
         mcs  = item.get('mcs',    [])
         if mcs and any(m > 0 for m in mcs):
@@ -709,90 +776,99 @@ def create_bubble_chart(crypto_ranking):
         if avg_mc <= 0 or avg_ratio <= 0:
             continue
 
-        # Determinar zona predominante
-        scores_list = item.get('scores', [])
-        if avg_ratio >= 1.0:
-            zone = 'breakout'
-        elif avg_ratio >= 0.5:
-            zone = 'strong'
-        elif avg_ratio >= 0.2:
-            zone = 'early_accumulation'
+        # RS vs BTC em pontos percentuais (gem_change - btc_change)
+        rs_24h_array = item.get('rs_24h', [])
+        rs_7d_array  = item.get('rs_7d',  [])
+        if rs_24h_array and rs_24h_array[-1] != 1.0:
+            rs_pp = rs_24h_array[-1]
+        elif rs_7d_array and rs_7d_array[-1] != 1.0:
+            rs_pp = rs_7d_array[-1]
         else:
-            zone = 'unknown'
+            rs_pp = None
 
-        # Tamanho proporcional ao score (mínimo visível = 8, máximo = 50)
+        # ✅ CORREÇÃO 1: bandas simétricas corretas, sem elif morto
+        if rs_pp is None:
+            rs_category = 'unknown'
+        elif rs_pp >= 20.0:
+            rs_category = 'strong'
+        elif rs_pp >= 5.0:
+            rs_category = 'moderate'
+        elif rs_pp >= -5.0:
+            rs_category = 'neutral'
+        elif rs_pp >= -20.0:
+            rs_category = 'weak'
+        else:
+            rs_category = 'very_weak'
+
+        # ✅ CORREÇÃO 3: sem print de debug
+
         bubble_size = max(8, min(50, avg_score * 40))
+
+        if avg_ratio >= 1.0:   zone = 'breakout'
+        elif avg_ratio >= 0.5: zone = 'strong'
+        elif avg_ratio >= 0.2: zone = 'early_accumulation'
+        else:                  zone = 'unknown'
 
         symbols.append(item['symbol'])
         x_mc.append(avg_mc)
         y_ratio.append(avg_ratio)
         sizes.append(bubble_size)
-        colors.append(zone_color_map.get(zone, '#95a5a6'))
+        colors.append(rs_btc_color_map.get(rs_category, '#95a5a6'))
+        # ✅ CORREÇÃO 2: mostrar % no hover
+        rs_label = f'{rs_pp:+.2f}% vs BTC ({rs_category})' if rs_pp is not None else 'sem dados RS'
         hover.append(
             f"<b>{item['symbol']}</b><br>"
             f"MC médio: ${avg_mc:,.0f}<br>"
-            f"Ratio médio: {avg_ratio:.2f}<br>"
+            f"Ratio médio: {avg_ratio:.2f} ({zone})<br>"
             f"Score médio: {avg_score:.3f}<br>"
             f"Consistência: {item['consistency']*100:.0f}%<br>"
-            f"Zona: {zone}<br>"
+            f"RS vs BTC: {rs_label}<br>"
             f"Presença: {len(item['periods_present'])} snapshots"
         )
 
     fig = go.Figure()
 
-    # Adicionar por zona para ter legenda separada
-    for zone_label, zone_color in zone_color_map.items():
-        if zone_label == 'mixed':
-            continue
-        idx = [i for i, c in enumerate(colors) if c == zone_color]
+    for rs_label, rs_color in rs_btc_color_map.items():
+        idx = [i for i, c in enumerate(colors) if c == rs_color]
         if not idx:
             continue
         fig.add_trace(go.Scatter(
-            x=[x_mc[i]   for i in idx],
+            x=[x_mc[i]    for i in idx],
             y=[y_ratio[i] for i in idx],
             mode='markers+text',
-            name=zone_label.replace('_', ' ').title(),
+            name=rs_label.replace('_', ' ').title(),
             text=[symbols[i] for i in idx],
             textposition='top center',
             textfont=dict(size=9),
             marker=dict(
                 size=[sizes[i] for i in idx],
-                color=zone_color,
-                opacity=0.75,
+                color=rs_color,
+                opacity=0.80,
                 line=dict(width=1, color='white')
             ),
             hovertext=[hover[i] for i in idx],
             hoverinfo='text'
         ))
 
-    # Linha de referência ratio = 1.0 (breakout threshold)
     if x_mc:
         x_range = [min(x_mc) * 0.8, max(x_mc) * 1.2]
         fig.add_shape(type='line', x0=x_range[0], x1=x_range[1], y0=1.0, y1=1.0,
                       line=dict(color='#e74c3c', width=1, dash='dash'))
         fig.add_annotation(x=x_range[1], y=1.0, text='Breakout ≥1.0',
-                           showarrow=False, font=dict(color='#e74c3c', size=10),
-                           xanchor='right')
-
-        # Linha de referência ratio = 0.5 (strong threshold)
+                           showarrow=False, font=dict(color='#e74c3c', size=10), xanchor='right')
         fig.add_shape(type='line', x0=x_range[0], x1=x_range[1], y0=0.5, y1=0.5,
                       line=dict(color='#f39c12', width=1, dash='dot'))
         fig.add_annotation(x=x_range[1], y=0.5, text='Strong ≥0.5',
-                           showarrow=False, font=dict(color='#f39c12', size=10),
-                           xanchor='right')
+                           showarrow=False, font=dict(color='#f39c12', size=10), xanchor='right')
 
     fig.update_layout(
-        title='🫧 BUBBLE CHART — Ratio vs Market Cap (tamanho = Score)',
-        xaxis=dict(
-            title='Market Cap (USD)',
-            type='log',
-            tickformat='$,.0f',
-        ),
+        title='🫧 BUBBLE CHART — Ratio vs Market Cap | Cor = RS vs BTC | Tamanho = Score',
+        xaxis=dict(title='Market Cap (USD)', type='log', tickformat='$,.0f'),
         yaxis=dict(title='Ratio Volume/MC', rangemode='tozero'),
         height=600,
         template='plotly_white',
         hovermode='closest',
-        legend=dict(title='Zona', orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
+        legend=dict(title='RS vs BTC', orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
     )
 
     return fig
@@ -805,21 +881,14 @@ def create_persistence_heatmap(crypto_ranking, dfs):
     Linhas  = cryptos (ordenadas por score médio descendente, top 25)
     Colunas = snapshots em ordem cronológica (P1 → Pn)
     Cor     = ratio Volume/MC naquele snapshot (0 = ausente / branco)
-
-    Leitura rápida:
-      - Linha toda verde escuro → ratio alto e consistente → candidata forte
-      - Linha com gaps brancos  → aparece e some → spike, não tendência
-      - Linha verde ficando mais escura da esquerda p/ direita → acelerando
     """
 
-    # Pegar top 25 por score médio para não poluir o gráfico
     top_items = sorted(crypto_ranking, key=lambda x: x['avg_score'], reverse=True)[:25]
 
     n_periods = len(dfs)
     period_labels = [f'P{i+1}' for i in range(n_periods)]
     symbol_labels = [item['symbol'] for item in top_items]
 
-    # Montar matriz: linhas = cryptos, colunas = períodos
     matrix = []
     annotations = []
 
@@ -831,17 +900,15 @@ def create_persistence_heatmap(crypto_ranking, dfs):
 
         for col_idx in range(n_periods):
             if col_idx in periods_present:
-                # Encontrar o índice dentro dos dados do item
                 data_idx = periods_present.index(col_idx)
                 v = vols_per_period[data_idx] if data_idx < len(vols_per_period) else 0
                 m = mcs_per_period[data_idx]  if data_idx < len(mcs_per_period)  else 0
                 ratio = v / m if m > 0 else 0
             else:
-                ratio = 0  # Ausente
+                ratio = 0
 
             row_ratios.append(ratio)
 
-            # Anotação do valor dentro da célula (só se presente)
             if ratio > 0:
                 annotations.append(dict(
                     x=col_idx, y=row_idx,
@@ -852,20 +919,18 @@ def create_persistence_heatmap(crypto_ranking, dfs):
 
         matrix.append(row_ratios)
 
-    # Colorscale: branco (ausente/baixo) → verde forte (ratio alto)
     colorscale = [
-        [0.0,  'rgba(255,255,255,0)'],   # 0   = ausente (transparente/branco)
-        [0.01, '#f0f9e8'],               # trace
-        [0.2,  '#bae4b3'],               # early accumulation
-        [0.5,  '#74c476'],               # strong
-        [0.8,  '#31a354'],               # forte
-        [1.0,  '#006d2c'],               # breakout
+        [0.0,  'rgba(255,255,255,0)'],
+        [0.01, '#f0f9e8'],
+        [0.2,  '#bae4b3'],
+        [0.5,  '#74c476'],
+        [0.8,  '#31a354'],
+        [1.0,  '#006d2c'],
     ]
 
-    # Normalizar: ratio máximo observado como teto da escala
     all_ratios = [r for row in matrix for r in row if r > 0]
     zmax = max(all_ratios) if all_ratios else 2.0
-    zmax = min(zmax, 3.0)  # Limitar para não distorcer por outliers
+    zmax = min(zmax, 3.0)
 
     fig = go.Figure(data=go.Heatmap(
         z=matrix,
@@ -899,13 +964,8 @@ def create_accumulation_chart(crypto_ranking, dfs):
     """
     📈 Gráfico de Acumulação Silenciosa
 
-    Mostra o slope do ratio ao longo do tempo para as top gems.
     Barras horizontais ordenadas por accumulation_score.
-    Verde = acumulando / Cinza = sem sinal / Vermelho = caindo.
-
-    Só plota gems que têm accumulation_score > 0 nos dados.
-    Caso os dados não tenham a coluna (execuções antigas), usa
-    o slope calculado a partir da série de ratios disponível.
+    Verde = acumulando / Cinza = sem sinal.
     """
 
     items_with_score = []
@@ -913,20 +973,29 @@ def create_accumulation_chart(crypto_ranking, dfs):
     for item in crypto_ranking:
         symbol = item['symbol']
 
-        # Tentar pegar accumulation_score dos dados enriquecidos
         acc_score  = 0.0
         acc_signal = 'none'
         acc_slope  = 0.0
 
-        # Procurar nos DataFrames carregados
         for df in dfs:
             if df is None or df.empty:
                 continue
             row = df[df['symbol'] == symbol]
             if not row.empty:
-                acc_score  = float(row.iloc[0].get('accumulation_score',  0) or 0)
-                acc_signal = str(row.iloc[0].get('accumulation_signal', 'none') or 'none')
-                acc_slope  = float(row.iloc[0].get('accumulation_slope',  0) or 0)
+                # ✅ CORREÇÃO 7: proteção contra None e NaN antes do float()
+                def _safe_float(series_row, col, default):
+                    val = series_row.get(col, default)
+                    if val is None or (isinstance(val, float) and str(val) == 'nan'):
+                        return default
+                    try:
+                        return float(val)
+                    except (ValueError, TypeError):
+                        return default
+
+                s = row.iloc[0]
+                acc_score  = _safe_float(s, 'accumulation_score',  0.0)
+                acc_signal = str(s.get('accumulation_signal', 'none') or 'none')
+                acc_slope  = _safe_float(s, 'accumulation_slope',  0.0)
                 break
 
         # Fallback: calcular slope da série de ratios do ranking global
@@ -949,15 +1018,14 @@ def create_accumulation_chart(crypto_ranking, dfs):
 
         if acc_score > 0.05 or abs(acc_slope) > 0.005:
             items_with_score.append({
-                'symbol':  symbol,
-                'score':   acc_score,
-                'signal':  acc_signal,
-                'slope':   acc_slope,
+                'symbol':    symbol,
+                'score':     acc_score,
+                'signal':    acc_signal,
+                'slope':     acc_slope,
                 'avg_score': item.get('avg_score', 0)
             })
 
     if not items_with_score:
-        # Retorna gráfico vazio com mensagem
         fig = go.Figure()
         fig.add_annotation(
             text='Dados de acumulação ainda não disponíveis.<br>'
@@ -968,7 +1036,6 @@ def create_accumulation_chart(crypto_ranking, dfs):
         fig.update_layout(title='📈 ACUMULAÇÃO SILENCIOSA', height=300, template='plotly_white')
         return fig
 
-    # Ordenar por score descendente, top 20
     items_with_score.sort(key=lambda x: x['score'], reverse=True)
     items_with_score = items_with_score[:20]
 
@@ -1006,7 +1073,6 @@ def create_accumulation_chart(crypto_ranking, dfs):
         hoverinfo='text'
     )])
 
-    # Linha de referência — threshold de confirmação
     fig.add_vline(x=0.6, line_dash='dash', line_color='#31a354',
                   annotation_text='Confirmado ≥0.6', annotation_position='top')
     fig.add_vline(x=0.4, line_dash='dot',  line_color='#74c476',
@@ -1027,14 +1093,6 @@ def create_accumulation_chart(crypto_ranking, dfs):
 def create_sector_heatmap(crypto_ranking, dfs):
     """
     🏭 Heatmap Setorial — Temperatura por setor ao longo dos snapshots
-
-    Linhas  = setores (L1, L2, DeFi, Gaming, AI, Meme, Infra, RWA…)
-    Colunas = snapshots em ordem cronológica
-    Cor     = ratio médio do setor naquele snapshot
-
-    Leitura:
-      - Linha toda quente → setor consistentemente ativo
-      - Múltiplas linhas aquecendo ao mesmo tempo → sinal de rotação ampla
     """
     try:
         from accumulation_sector import get_sector, SectorCorrelationAnalyzer
@@ -1051,7 +1109,6 @@ def create_sector_heatmap(crypto_ranking, dfs):
 
     analyzer = SectorCorrelationAnalyzer()
 
-    # Montar snapshots setoriais a partir dos global dfs
     n_periods     = len(dfs)
     period_labels = [f'P{i+1}' for i in range(n_periods)]
     all_sectors   = set()
@@ -1062,7 +1119,6 @@ def create_sector_heatmap(crypto_ranking, dfs):
             snap_analyses.append({})
             continue
         gems = df.to_dict(orient='records')
-        # Enriquecer com setor se não tiver
         for gem in gems:
             if 'sector' not in gem or not gem['sector']:
                 gem['sector'] = get_sector(gem.get('symbol', '').lower())
@@ -1080,7 +1136,6 @@ def create_sector_heatmap(crypto_ranking, dfs):
         fig.update_layout(title='🏭 ANÁLISE SETORIAL', height=300, template='plotly_white')
         return fig
 
-    # Ordenar setores por ratio médio geral (mais quente no topo)
     sector_avg = {}
     for sector in all_sectors:
         vals = [s[sector]['avg_ratio'] for s in snap_analyses if sector in s]
@@ -1088,22 +1143,17 @@ def create_sector_heatmap(crypto_ranking, dfs):
 
     sorted_sectors = sorted(all_sectors, key=lambda s: sector_avg[s], reverse=True)
 
-    # Montar matriz
-    matrix       = []
-    annotations  = []
-    sector_labels= []
+    matrix      = []
+    annotations = []
+    sector_labels = []
 
     for row_idx, sector in enumerate(sorted_sectors):
         row = []
         for col_idx, snap in enumerate(snap_analyses):
             if sector in snap:
                 val = snap[sector]['avg_ratio']
-                hot = snap[sector].get('hot_gems', 0)
-                temp= snap[sector].get('temperature', 'COLD')
             else:
-                val  = 0
-                hot  = 0
-                temp = 'COLD'
+                val = 0
             row.append(val)
 
             if val > 0:
@@ -1119,10 +1169,10 @@ def create_sector_heatmap(crypto_ranking, dfs):
 
     colorscale = [
         [0.0,  '#f5f5f5'],
-        [0.15, '#fee8c8'],   # COLD
-        [0.35, '#fdbb84'],   # WARMING
-        [0.6,  '#e34a33'],   # HOT
-        [1.0,  '#7f0000'],   # BLAZING
+        [0.15, '#fee8c8'],
+        [0.35, '#fdbb84'],
+        [0.6,  '#e34a33'],
+        [1.0,  '#7f0000'],
     ]
 
     all_vals = [v for row in matrix for v in row if v > 0]
@@ -1161,7 +1211,6 @@ def create_advanced_summary_table(top10, crypto_ranking, total_periods, historic
 
     global_dfs = historical_data.get('global_dfs', []) if historical_data else []
 
-    # Calcular deltas
     delta_global_dict = {}
     delta_recent_dict = {}
 
@@ -1178,8 +1227,6 @@ def create_advanced_summary_table(top10, crypto_ranking, total_periods, historic
         for sym in set(first_scores) | set(last_scores):
             delta_global_dict[sym] = last_scores.get(sym, 0) - first_scores.get(sym, 0)
 
-        # Recente: adaptativo — nunca igual ao global
-        # Usa janela de 5, mas mínimo índice 1 para não repetir o global
         RECENT_WINDOW = 5
         recent_index  = max(len(global_dfs) - RECENT_WINDOW, 1)
         df_recent_ref = global_dfs[recent_index]
@@ -1231,31 +1278,32 @@ def create_advanced_summary_table(top10, crypto_ranking, total_periods, historic
         top_growers_global, top_fallers_global, 'delta_global'
     )
 
-    # Recentes: só mostra se recent_index > 0 (ou seja, recente != global)
     if len(global_dfs) >= 3:
-        RECENT_WINDOW = 5
-        recent_index  = max(len(global_dfs) - RECENT_WINDOW, 1)
+        RECENT_WINDOW  = 5
+        recent_index   = max(len(global_dfs) - RECENT_WINDOW, 1)
         snapshots_back = len(global_dfs) - recent_index
         trends_html += render_trend_block(
             f'⚡ TENDÊNCIAS RECENTES (últimos {snapshots_back} snapshots)',
             top_growers_recent, top_fallers_recent, 'delta_recent'
         )
     else:
-        trends_html += """
+        # ✅ CORREÇÃO 6: era """ sem f — {len(global_dfs)} aparecia literal no HTML
+        n_global = len(global_dfs)
+        trends_html += f"""
         <div style="background:#f8f9fa;padding:15px;border-radius:5px;margin:20px 0;">
             <h4>⚡ TENDÊNCIAS RECENTES</h4>
             <p style="text-align:center;color:#666;padding:20px;">
                 Necessário pelo menos 3 snapshots para calcular tendências recentes.<br>
-                Histórico atual: {len(global_dfs)} snapshot(s).
+                Histórico atual: {n_global} snapshot(s).
             </p>
         </div>"""
 
-    total_unique    = len(crypto_ranking)
-    consistent_count= len([i for i in crypto_ranking if i['consistency'] == 1.0])
-    new_count       = len([i for i in crypto_ranking if i['presence_type'] == 'new'])
-    gone_count      = len([i for i in crypto_ranking if i['presence_type'] == 'gone'])
-    avg_score_geral = sum(i['avg_score'] for i in crypto_ranking) / total_unique if total_unique else 0
-    rotatividade    = (new_count + gone_count) / total_unique * 100 if total_unique else 0
+    total_unique     = len(crypto_ranking)
+    consistent_count = len([i for i in crypto_ranking if i['consistency'] == 1.0])
+    new_count        = len([i for i in crypto_ranking if i['presence_type'] == 'new'])
+    gone_count       = len([i for i in crypto_ranking if i['presence_type'] == 'gone'])
+    avg_score_geral  = sum(i['avg_score'] for i in crypto_ranking) / total_unique if total_unique else 0
+    rotatividade     = (new_count + gone_count) / total_unique * 100 if total_unique else 0
 
     top5_performers = sorted(crypto_ranking, key=lambda x: x['avg_score'], reverse=True)[:5]
 
@@ -1324,15 +1372,15 @@ def create_interactive_table(df):
 
     table_df = df[[c for c in display_cols if c in df.columns]].copy()
 
-    table_df['market_cap']               = table_df['market_cap'].apply(lambda x: f"${x:,.0f}" if pd.notna(x) else 'N/A')
-    table_df['total_volume']             = table_df['total_volume'].apply(lambda x: f"${x:,.0f}" if pd.notna(x) else 'N/A')
+    table_df['market_cap']                  = table_df['market_cap'].apply(lambda x: f"${x:,.0f}" if pd.notna(x) else 'N/A')
+    table_df['total_volume']                = table_df['total_volume'].apply(lambda x: f"${x:,.0f}" if pd.notna(x) else 'N/A')
     table_df['price_change_percentage_24h'] = table_df['price_change_percentage_24h'].apply(lambda x: f"{x:.1f}%" if pd.notna(x) else 'N/A')
 
     if 'ratio'       in table_df.columns: table_df['ratio']       = table_df['ratio'].apply(lambda x: f"{x:.2f}" if pd.notna(x) else 'N/A')
     if 'final_score' in table_df.columns: table_df['final_score'] = table_df['final_score'].apply(lambda x: f"{x:.2f}" if pd.notna(x) else 'N/A')
 
     if 'persistence_count_3d' in table_df.columns:
-        for c in ['persistence_count_3d','persistence_count_7d','persistence_count_14d']:
+        for c in ['persistence_count_3d', 'persistence_count_7d', 'persistence_count_14d']:
             if c in table_df.columns:
                 table_df[c] = table_df[c].apply(lambda x: f"{x}x")
 
@@ -1340,11 +1388,11 @@ def create_interactive_table(df):
         table_df['is_confirmed_leader'] = table_df['is_confirmed_leader'].apply(lambda x: '👑 YES' if x else '❌ NO')
 
     column_mapping = {
-        'symbol':'Symbol','name':'Name','market_cap':'Market Cap','total_volume':'Volume',
-        'price_change_percentage_24h':'24h%','ratio':'Ratio','final_score':'Score',
-        'persistence_count_3d':'3d','persistence_count_7d':'7d','persistence_count_14d':'14d',
-        'timeframe_classification':'Classification','is_confirmed_leader':'Leader',
-        'zone':'Zone','momentum':'Momentum','is_gold':'Gold','rs_strong':'RS'
+        'symbol': 'Symbol', 'name': 'Name', 'market_cap': 'Market Cap', 'total_volume': 'Volume',
+        'price_change_percentage_24h': '24h%', 'ratio': 'Ratio', 'final_score': 'Score',
+        'persistence_count_3d': '3d', 'persistence_count_7d': '7d', 'persistence_count_14d': '14d',
+        'timeframe_classification': 'Classification', 'is_confirmed_leader': 'Leader',
+        'zone': 'Zone', 'momentum': 'Momentum', 'is_gold': 'Gold', 'rs_strong': 'RS'
     }
     table_df.rename(columns=column_mapping, inplace=True)
 
@@ -1373,8 +1421,8 @@ def create_period_html(df, snapshot_info, index):
     if sort_col:
         table_df = table_df.sort_values(sort_col, ascending=False)
 
-    table_df['market_cap']               = table_df['market_cap'].apply(lambda x: f"${x:,.0f}" if pd.notna(x) else 'N/A')
-    table_df['total_volume']             = table_df['total_volume'].apply(lambda x: f"${x:,.0f}" if pd.notna(x) else 'N/A')
+    table_df['market_cap']                  = table_df['market_cap'].apply(lambda x: f"${x:,.0f}" if pd.notna(x) else 'N/A')
+    table_df['total_volume']                = table_df['total_volume'].apply(lambda x: f"${x:,.0f}" if pd.notna(x) else 'N/A')
     table_df['price_change_percentage_24h'] = table_df['price_change_percentage_24h'].apply(lambda x: f"{x:.1f}%" if pd.notna(x) else 'N/A')
     if 'ratio'       in table_df.columns: table_df['ratio']       = table_df['ratio'].apply(lambda x: f"{x:.2f}" if pd.notna(x) else 'N/A')
     if 'final_score' in table_df.columns: table_df['final_score'] = table_df['final_score'].apply(lambda x: f"{x:.2f}" if pd.notna(x) else 'N/A')
@@ -1382,18 +1430,18 @@ def create_period_html(df, snapshot_info, index):
         table_df['is_confirmed_leader'] = table_df['is_confirmed_leader'].apply(lambda x: '👑 YES' if x else '❌ NO')
 
     column_mapping = {
-        'symbol':'Symbol','name':'Name','market_cap':'Market Cap','total_volume':'Volume',
-        'price_change_percentage_24h':'24h%','ratio':'Ratio','final_score':'Score',
-        'persistence_count_3d':'3d','persistence_count_7d':'7d','persistence_count_14d':'14d',
-        'timeframe_classification':'Classification','is_confirmed_leader':'Leader',
-        'zone':'Zone','momentum':'Momentum','is_gold':'Gold','rs_strong':'RS'
+        'symbol': 'Symbol', 'name': 'Name', 'market_cap': 'Market Cap', 'total_volume': 'Volume',
+        'price_change_percentage_24h': '24h%', 'ratio': 'Ratio', 'final_score': 'Score',
+        'persistence_count_3d': '3d', 'persistence_count_7d': '7d', 'persistence_count_14d': '14d',
+        'timeframe_classification': 'Classification', 'is_confirmed_leader': 'Leader',
+        'zone': 'Zone', 'momentum': 'Momentum', 'is_gold': 'Gold', 'rs_strong': 'RS'
     }
     table_df.rename(columns=column_mapping, inplace=True)
 
-    mc_mean  = df['market_cap'].mean()
-    vol_sum  = df['total_volume'].sum()
-    pos_pct  = (df['price_change_percentage_24h'] > 0).mean() * 100
-    pos_cnt  = (df['price_change_percentage_24h'] > 0).sum()
+    mc_mean = df['market_cap'].mean()
+    vol_sum = df['total_volume'].sum()
+    pos_pct = (df['price_change_percentage_24h'] > 0).mean() * 100
+    pos_cnt = (df['price_change_percentage_24h'] > 0).sum()
 
     return f"""
     <div class="stats">
@@ -1408,7 +1456,7 @@ def create_period_html(df, snapshot_info, index):
 
 
 # ===========================================================================
-# Funções de menu — sem alterações
+# Funções de menu
 # ===========================================================================
 
 def get_available_snapshots():
