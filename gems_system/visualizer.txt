@@ -4,22 +4,15 @@
 Correção principal: bloco global (evolução histórica) agora aparece
 em QUALQUER fluxo — snapshot único ou comparação múltipla.
 """
-
 import os
 import json
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.express as px
-from datetime import datetime, timedelta
+from datetime import datetime
 import webbrowser
 import tempfile
-import numpy as np
-from tvDatafeed import TvDatafeed, Interval
-from typing import Optional, Dict, Any
-from urllib.request import urlopen, Request
-from urllib.parse import urlencode
-from urllib.error import HTTPError
 from evolution_functions import (
     get_all_snapshots_for_evolution,
     analyze_historical_evolution,
@@ -29,258 +22,6 @@ from evolution_functions import (
     get_evolution_color,
     get_evolution_emoji
 )
-
-def _coingecko_get(url: str, params: Optional[Dict[str, Any]] = None, timeout: int = 30) -> Any:
-    key = os.environ.get('COINGECKO_API_KEY')
-
-    def _pro_url(u: str) -> str:
-        try:
-            if u.startswith('https://api.coingecko.com/'):
-                return u.replace('https://api.coingecko.com/', 'https://pro-api.coingecko.com/', 1)
-            if u.startswith('http://api.coingecko.com/'):
-                return u.replace('http://api.coingecko.com/', 'https://pro-api.coingecko.com/', 1)
-        except Exception:
-            return u
-        return u
-
-    def _do_request(extra_params: Dict[str, Any], extra_headers: Dict[str, str]) -> Any:
-        p = dict(params or {})
-        p.update(extra_params)
-        q = urlencode(p)
-        full = f"{url}?{q}" if q else url
-
-        headers = {
-            "User-Agent": "gems_system_visualizer/1.0",
-            "Accept": "application/json",
-        }
-        headers.update(extra_headers)
-        req = Request(full, headers=headers)
-        try:
-            with urlopen(req, timeout=timeout) as resp:
-                raw = resp.read().decode('utf-8', errors='replace')
-            return json.loads(raw)
-        except HTTPError as e:
-            try:
-                body = e.read().decode('utf-8', errors='replace')
-            except Exception:
-                body = ''
-
-            msg = str(getattr(e, 'msg', '') or '')
-            if body:
-                body_one_line = ' '.join(body.split())
-                if len(body_one_line) > 800:
-                    body_one_line = body_one_line[:800] + '...'
-                msg = (msg + ' | ' if msg else '') + body_one_line
-
-            raise HTTPError(getattr(e, 'url', full), e.code, msg, e.hdrs, e.fp)
-
-    if not key:
-        return _do_request({}, {})
-
-    try:
-        return _do_request(
-            {"x_cg_demo_api_key": key, "x_cg_pro_api_key": key, "x_cg_api_key": key},
-            {"x-cg-demo-api-key": key, "x-cg-pro-api-key": key, "x-cg-api-key": key}
-        )
-    except HTTPError as e:
-        if getattr(e, 'code', None) != 401:
-            raise
-
-        try:
-            return _do_request(
-                {"x_cg_pro_api_key": key},
-                {"x-cg-pro-api-key": key}
-            )
-        except HTTPError as e2:
-            if getattr(e2, 'code', None) != 401:
-                raise
-
-            pro = _pro_url(url)
-            if pro != url:
-                try:
-                    return _coingecko_get(pro, params=params, timeout=timeout)
-                except Exception:
-                    pass
-
-            raise RuntimeError(
-                "CoinGecko 401 Unauthorized. A API key informada parece inválida ou "
-                "precisa ser usada na base URL PRO (pro-api.coingecko.com)."
-            )
-
-def _build_macro_timing(days: int = 730, bb_period: int = 20, bb_std: float = 2.0) -> dict:
-    base_dir = os.path.dirname(__file__)
-    macro_dir = os.path.join(base_dir, 'data', 'macro')
-    os.makedirs(macro_dir, exist_ok=True)
-    macro_path = os.path.join(macro_dir, 'macro_timing.json')
-    now = datetime.now()
-
-    try:
-        tv = TvDatafeed()
-        usdt_weekly = tv.get_hist(symbol='USDT.D', exchange='CRYPTOCAP', interval=Interval.in_weekly, n_bars=200)
-        usdt_monthly = tv.get_hist(symbol='USDT.D', exchange='CRYPTOCAP', interval=Interval.in_monthly, n_bars=100)
-        others_weekly = tv.get_hist(symbol='OTHERS', exchange='CRYPTOCAP', interval=Interval.in_weekly, n_bars=200)
-    except Exception as e:
-        raise RuntimeError(f"Erro TV: {e}")
-
-    def _bb_percent(series: pd.Series, period: int = 20, std_mult: float = 2.0) -> pd.Series:
-        ma = series.rolling(period).mean()
-        sd = series.rolling(period).std(ddof=0)
-        return (series - (ma - std_mult * sd)) / ((ma + std_mult * sd) - (ma - std_mult * sd))
-
-    w_usdt_bbp = _bb_percent(usdt_weekly['close'], bb_period, bb_std).dropna()
-    m_usdt_bbp = _bb_percent(usdt_monthly['close'], 20, bb_std).dropna()
-    w_others_bbp = _bb_percent(others_weekly['close'], bb_period, bb_std).dropna()
-
-    curr_m_usdt = m_usdt_bbp.iloc[-1]
-    prev_m_usdt = m_usdt_bbp.iloc[-2]
-    curr_w_usdt = w_usdt_bbp.iloc[-1]
-    curr_w_others = w_others_bbp.iloc[-1]
-
-    # --- REGIME MENSAL ---
-    buy_mode = (prev_m_usdt >= 1.0 and curr_m_usdt < 1.0) or (curr_m_usdt < 1.0 and curr_m_usdt > 0.2)
-    sell_mode = (prev_m_usdt <= 0.0 and curr_m_usdt > 0.0) or (curr_m_usdt > 0.0 and curr_m_usdt < 0.8 and not buy_mode)
-
-    capitulation_lock = bool(sell_mode and curr_m_usdt >= 0.8)
-
-    weekly_state = {
-        "date": w_usdt_bbp.index[-1].strftime('%Y-%m-%d'),
-        "others_bbp": float(curr_w_others),
-        "usdt_d_bbp": float(curr_w_usdt),
-        "others_touch_low": bool(curr_w_others <= 0),
-        "usdt_touch_high": bool(curr_w_usdt >= 1),
-        "usdt_touch_low": bool(curr_w_usdt <= 0),
-    }
-
-    signal = {
-        "weekly_buy_trigger": bool(buy_mode and (weekly_state["others_touch_low"] or weekly_state["usdt_touch_high"])),
-        "tactical_rebound": bool(sell_mode and weekly_state["usdt_touch_high"] and not capitulation_lock),
-        "weekly_sell_trigger": bool(sell_mode and (weekly_state["usdt_touch_low"] or curr_w_others >= 1)),
-    }
-
-    payload = {
-        "generated_at": now.isoformat(),
-        "weekly": weekly_state,
-        "monthly": {"usdt_d_bbp": float(curr_m_usdt)},
-        "regime": {
-            "buy_mode": bool(buy_mode),
-            "sell_mode": bool(sell_mode),
-            "capitulation_lock": capitulation_lock
-        },
-        "signal": signal,
-    }
-
-    with open(macro_path, 'w', encoding='utf-8') as f:
-        json.dump(payload, f, ensure_ascii=False, indent=2)
-    return payload
-
-def _load_macro_timing() -> dict:
-    try:
-        base_dir = os.path.dirname(__file__)
-        macro_path = os.path.join(base_dir, 'data', 'macro', 'macro_timing.json')
-        if not os.path.exists(macro_path):
-            return _build_macro_timing()
-        with open(macro_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except:
-        return {}
-
-def _macro_timing_panel_html() -> str:
-    payload = _load_macro_timing()
-    if not payload: return ""
-
-    regime = payload['regime']
-    signal = payload['signal']
-    w = payload['weekly']
-    m = payload['monthly']
-
-    # Lógica Visual
-    if regime['capitulation_lock']:
-        r_label, r_border = "🚨 CAPITULAÇÃO ATIVA", "rgba(255, 69, 0, 1)"
-        a_label, a_border = "🚫 COMPRAS EM PAUSA", "rgba(255, 69, 0, 0.6)"
-    elif regime['buy_mode']:
-        r_label, r_border = "🟩 REGIME: COMPRA (Bull Market)", "rgba(46, 204, 113, 0.6)"
-        a_label = "✅ COMPRA ATIVA" if signal['weekly_buy_trigger'] else "— AGUARDANDO PONTO"
-        a_border = "rgba(46, 204, 113, 0.5)" if signal['weekly_buy_trigger'] else "rgba(255, 255, 255, 0.2)"
-    elif regime['sell_mode']:
-        r_label, r_border = "🟥 REGIME: RISCO/VENDA", "rgba(231, 76, 60, 0.6)"
-        a_label = "🟥 ALERTA DE SAÍDA"
-        a_border = "rgba(231, 76, 60, 0.5)"
-    else:
-        r_label, r_border = "⬜ NEUTRO", "rgba(255, 255, 255, 0.3)"
-        a_label, a_border = "—", "rgba(255, 255, 255, 0.2)"
-
-    if signal.get('tactical_rebound') and not regime['capitulation_lock']:
-        a_label, a_border = "🔵 REPIQUE TÁTICO", "rgba(52, 152, 219, 0.8)"
-
-    # Exibição explícita dos valores semanais na caixinha de ação
-    return f"""
-    <div style="margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; color: white;">
-        <div style="padding: 12px; border: 2px solid {r_border}; border-radius: 10px; background: rgba(0,0,0,0.3);">
-            <div style="font-size: 11px; opacity: 0.7;">STATUS MACRO</div>
-            <div style="font-weight: 900; font-size: 13px;">{r_label}</div>
-            <div style="font-size: 11px; margin-top: 4px; opacity: 0.8;">USDT.D Mensal BB%B: {m['usdt_d_bbp']:.2f}</div>
-        </div>
-        <div style="padding: 12px; border: 1px solid {a_border}; border-radius: 10px; background: rgba(0,0,0,0.2);">
-            <div style="font-size: 11px; opacity: 0.7;">AÇÃO SUGERIDA</div>
-            <div style="font-weight: 800; font-size: 13px;">{a_label}</div>
-            <div style="font-size: 11px; margin-top: 4px; opacity: 0.8;">
-                Semanal -> OTHERS: <b>{w['others_bbp']:.2f}</b> | USDT.D: <b>{w['usdt_d_bbp']:.2f}</b>
-            </div>
-        </div>
-    </div>
-    """
-
-def plot_usdt_debug_html(monthly_usdt_d, monthly_usdt_bbp):
-    import plotly.graph_objects as go
-    from plotly.subplots import make_subplots
-    import tempfile
-    import webbrowser
-
-    fig = make_subplots(
-        rows=2, cols=1,
-        shared_xaxes=True,
-        vertical_spacing=0.08,
-        row_heights=[0.7, 0.3]
-    )
-
-    # USDT.D
-    fig.add_trace(
-        go.Scatter(
-            x=monthly_usdt_d.index,
-            y=monthly_usdt_d,
-            name="USDT.D",
-            mode="lines"
-        ),
-        row=1, col=1
-    )
-
-    # BB%B
-    fig.add_trace(
-        go.Scatter(
-            x=monthly_usdt_bbp.index,
-            y=monthly_usdt_bbp,
-            name="BB%B",
-            mode="lines"
-        ),
-        row=2, col=1
-    )
-
-    # Linhas referência
-    fig.add_hline(y=1, line_dash="dash", row=2, col=1)
-    fig.add_hline(y=0, line_dash="dash", row=2, col=1)
-    fig.add_hline(y=0.5, line_dash="dot", row=2, col=1)
-
-    fig.update_layout(
-        height=700,
-        title="DEBUG USDT.D vs BB%B",
-        template="plotly_dark"
-    )
-
-    # 🔥 salvar HTML e abrir
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".html")
-    fig.write_html(temp_file.name)
-
-    webbrowser.open(f"file://{temp_file.name}")
 
 
 # ===========================================================================
@@ -462,13 +203,11 @@ def build_global_evolution_block(reference_dfs, snapshot_info):
 
 def _global_block_html(js_block, summary_html, hall_html):
     """Retorna o HTML completo do bloco global de evolução com tutoriais."""
-    macro_panel = _macro_timing_panel_html()
     return f"""
     <div style="background: white; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px 12px 0 0;">
             <h3 style="margin: 0; font-size: 1.4em;">📈 ANÁLISE HISTÓRICA GLOBAL</h3>
             <p style="margin: 5px 0 0 0; opacity: 0.9;">Todos os snapshots • 6 gráficos • Tutoriais completos</p>
-            {macro_panel}
         </div>
 
         <div style="padding: 20px;">
@@ -1884,11 +1623,10 @@ def main():
         print("2. 📊 Ver snapshot mais recente")
         print("3. 📊 Escolher snapshot específico")
         print("4. 📁 Listar todos os CSVs")
-        print("5. ⏱️ Atualizar Macro Timing (BB%B)")
         print("0. 🚪 Sair")
         print()
 
-        choice = input("Opção (0-5) [ENTER = 1]: ").strip()
+        choice = input("Opção (0-4) [ENTER = 1]: ").strip()
 
         if choice in ('', '1'):
             show_comparison_snapshots()
@@ -1902,16 +1640,11 @@ def main():
             csv_files = get_available_snapshots()
             if csv_files:
                 print("📁 CSVs disponíveis:")
-                for i, f in enumerate(csv_files, 1):
-                    print(f"{i}. {f}")
-
-        elif choice == '5':
-            try:
-                _build_macro_timing()
-                print("✅ Macro Timing atualizado (data/macro/macro_timing.json)")
-            except Exception as e:
-                print(f"⚠️ Falha ao atualizar Macro Timing: {e}")
-
+                for i, file in enumerate(csv_files[:15], 1):
+                    print(f"{i:2d}. {file}")
+                print(f"Total: {len(csv_files)} arquivos")
+            else:
+                print("❌ Nenhum snapshot encontrado")
         elif choice == '0':
             print("👋 Até logo!")
             break

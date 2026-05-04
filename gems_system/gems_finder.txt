@@ -9,7 +9,6 @@ import json
 import os
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
-import pandas as pd
 from accumulation_sector import (
     SilentAccumulationDetector,
     SectorCorrelationAnalyzer,
@@ -53,228 +52,6 @@ class GemsFinder:
         # Módulos de acumulação e setor
         self.accumulation_detector  = SilentAccumulationDetector()
         self.sector_analyzer        = SectorCorrelationAnalyzer()
-
-        self.macro_dir = os.path.join(self.cache_dir, 'macro')
-        os.makedirs(self.macro_dir, exist_ok=True)
-        self.macro_timing_path = os.path.join(self.macro_dir, 'macro_timing.json')
-        self.macro_raw_cache_path = os.path.join(self.macro_dir, 'macro_raw_cache.json')
-
-    def _coingecko_get(self, url: str, params: Optional[Dict[str, Any]] = None, timeout: int = 20) -> Any:
-        try:
-            r = requests.get(url, params=params, timeout=timeout)
-            if r.status_code != 200:
-                raise RuntimeError(f"HTTP {r.status_code}")
-            return r.json()
-        except Exception as e:
-            raise RuntimeError(f"Falha ao acessar CoinGecko: {e}")
-
-    def _load_macro_raw_cache(self) -> Optional[Dict[str, Any]]:
-        try:
-            if not os.path.exists(self.macro_raw_cache_path):
-                return None
-            with open(self.macro_raw_cache_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception:
-            return None
-
-    def _save_macro_raw_cache(self, payload: Dict[str, Any]) -> None:
-        try:
-            with open(self.macro_raw_cache_path, 'w', encoding='utf-8') as f:
-                json.dump(payload, f, ensure_ascii=False, indent=2)
-        except Exception:
-            return
-
-    def _bb_percent(self, series: pd.Series, period: int = 20, std_mult: float = 2.0) -> pd.Series:
-        ma = series.rolling(period, min_periods=period).mean()
-        sd = series.rolling(period, min_periods=period).std(ddof=0)
-        upper = ma + std_mult * sd
-        lower = ma - std_mult * sd
-        width = (upper - lower)
-        bbp = (series - lower) / width
-        return bbp
-
-    def build_macro_timing(self,
-                           days: int = 730,
-                           bb_period: int = 20,
-                           bb_std: float = 2.0,
-                           cache_hours: int = 12) -> Optional[Dict[str, Any]]:
-
-        now = datetime.now()
-        cached = self._load_macro_raw_cache()
-        if isinstance(cached, dict):
-            fetched_at = cached.get('fetched_at')
-            try:
-                fetched_at_dt = datetime.fromisoformat(fetched_at) if fetched_at else None
-            except Exception:
-                fetched_at_dt = None
-            if fetched_at_dt and (now - fetched_at_dt) < timedelta(hours=cache_hours):
-                raw = cached.get('raw')
-            else:
-                raw = None
-        else:
-            raw = None
-
-        if raw is None:
-            base = "https://api.coingecko.com/api/v3"
-            total_chart = self._coingecko_get(
-                f"{base}/global/market_cap_chart",
-                params={"vs_currency": "usd", "days": days}
-            )
-
-            top10 = self._coingecko_get(
-                f"{base}/coins/markets",
-                params={
-                    "vs_currency": "usd",
-                    "order": "market_cap_desc",
-                    "per_page": 10,
-                    "page": 1,
-                    "sparkline": False
-                }
-            )
-            top10_ids = [c.get('id') for c in top10 if isinstance(c, dict) and c.get('id')]
-
-            top10_charts = {}
-            for cid in top10_ids:
-                data = self._coingecko_get(
-                    f"{base}/coins/{cid}/market_chart",
-                    params={"vs_currency": "usd", "days": days}
-                )
-                top10_charts[cid] = data.get('market_caps', []) if isinstance(data, dict) else []
-
-            usdt_chart = self._coingecko_get(
-                f"{base}/coins/tether/market_chart",
-                params={"vs_currency": "usd", "days": days}
-            )
-
-            raw = {
-                "total_market_cap": total_chart.get('market_cap', []) if isinstance(total_chart, dict) else [],
-                "top10_ids": top10_ids,
-                "top10_market_caps": top10_charts,
-                "usdt_market_caps": usdt_chart.get('market_caps', []) if isinstance(usdt_chart, dict) else [],
-            }
-            self._save_macro_raw_cache({"fetched_at": now.isoformat(), "raw": raw})
-
-        try:
-            total_points = raw.get('total_market_cap', [])
-            if not total_points:
-                return None
-
-            total_df = pd.DataFrame(total_points, columns=['ts', 'total_mc'])
-            total_df['dt'] = pd.to_datetime(total_df['ts'], unit='ms')
-            total_df = total_df.dropna(subset=['dt']).set_index('dt').sort_index()
-            total = total_df['total_mc'].astype(float)
-
-            top10_sum = pd.Series(0.0, index=total.index)
-            for cid, pts in (raw.get('top10_market_caps') or {}).items():
-                if not pts:
-                    continue
-                df = pd.DataFrame(pts, columns=['ts', 'mc'])
-                df['dt'] = pd.to_datetime(df['ts'], unit='ms')
-                df = df.dropna(subset=['dt']).set_index('dt').sort_index()
-                s = df['mc'].astype(float).reindex(total.index, method='nearest')
-                top10_sum = top10_sum.add(s.fillna(method='ffill').fillna(method='bfill'), fill_value=0.0)
-
-            usdt_pts = raw.get('usdt_market_caps', [])
-            usdt_df = pd.DataFrame(usdt_pts, columns=['ts', 'usdt_mc'])
-            usdt_df['dt'] = pd.to_datetime(usdt_df['ts'], unit='ms')
-            usdt_df = usdt_df.dropna(subset=['dt']).set_index('dt').sort_index()
-            usdt_mc = usdt_df['usdt_mc'].astype(float).reindex(total.index, method='nearest')
-            usdt_mc = usdt_mc.fillna(method='ffill').fillna(method='bfill')
-
-            others_mc = (total - top10_sum).clip(lower=0.0)
-            usdt_d = (usdt_mc / total).clip(lower=0.0)
-
-            weekly_total = total.resample('W').last()
-            weekly_others = others_mc.resample('W').last()
-            weekly_usdt_d = usdt_d.resample('W').last()
-
-            monthly_total = total.resample('M').last()
-            monthly_others = others_mc.resample('M').last()
-            monthly_usdt_d = usdt_d.resample('M').last()
-
-            weekly_others_bbp = self._bb_percent(weekly_others, period=bb_period, std_mult=bb_std)
-            weekly_usdt_bbp = self._bb_percent(weekly_usdt_d, period=bb_period, std_mult=bb_std)
-            monthly_others_bbp = self._bb_percent(monthly_others, period=bb_period, std_mult=bb_std)
-            monthly_usdt_bbp = self._bb_percent(monthly_usdt_d, period=bb_period, std_mult=bb_std)
-
-            last_week = weekly_others_bbp.dropna().index.max() if not weekly_others_bbp.dropna().empty else None
-            last_month = monthly_usdt_bbp.dropna().index.max() if not monthly_usdt_bbp.dropna().empty else None
-
-            def _to_float(v):
-                try:
-                    return float(v)
-                except Exception:
-                    return None
-
-            weekly_state = {
-                "date": last_week.strftime('%Y-%m-%d') if last_week else None,
-                "others_bbp": _to_float(weekly_others_bbp.loc[last_week]) if last_week else None,
-                "usdt_d_bbp": _to_float(weekly_usdt_bbp.loc[last_week]) if last_week else None,
-                "others_touch_low": bool(last_week and weekly_others_bbp.loc[last_week] < 0),
-                "others_touch_high": bool(last_week and weekly_others_bbp.loc[last_week] > 1),
-                "usdt_touch_low": bool(last_week and weekly_usdt_bbp.loc[last_week] < 0),
-                "usdt_touch_high": bool(last_week and weekly_usdt_bbp.loc[last_week] > 1),
-            }
-
-            monthly_state = {
-                "date": last_month.strftime('%Y-%m-%d') if last_month else None,
-                "others_bbp": _to_float(monthly_others_bbp.loc[last_month]) if last_month else None,
-                "usdt_d_bbp": _to_float(monthly_usdt_bbp.loc[last_month]) if last_month else None,
-                "others_touch_low": bool(last_month and monthly_others_bbp.loc[last_month] < 0),
-                "others_touch_high": bool(last_month and monthly_others_bbp.loc[last_month] > 1),
-                "usdt_touch_low": bool(last_month and monthly_usdt_bbp.loc[last_month] < 0),
-                "usdt_touch_high": bool(last_month and monthly_usdt_bbp.loc[last_month] > 1),
-            }
-
-            monthly_usdt_bbp_clean = monthly_usdt_bbp.dropna()
-            usdt_exit_from_top = False
-            if len(monthly_usdt_bbp_clean) >= 2:
-                prev = monthly_usdt_bbp_clean.iloc[-2]
-                curr = monthly_usdt_bbp_clean.iloc[-1]
-                usdt_exit_from_top = bool(prev > 1 and curr <= 1)
-
-            regime = {
-                "buy_mode": bool(usdt_exit_from_top),
-                "sell_mode": bool(monthly_state["usdt_touch_low"]),
-                "usdt_exit_from_top": bool(usdt_exit_from_top),
-            }
-
-            signal = {
-                "weekly_buy_trigger": bool(regime["buy_mode"] and weekly_state["others_touch_low"]),
-                "weekly_sell_trigger": bool(regime["sell_mode"] and weekly_state["others_touch_high"]),
-            }
-
-            payload = {
-                "generated_at": now.isoformat(),
-                "config": {
-                    "days": days,
-                    "bb_period": bb_period,
-                    "bb_std": bb_std,
-                    "others_definition": "TOTAL_MC - sum(TOP10_MC)",
-                    "touch_low": "bbp < 0",
-                    "touch_high": "bbp > 1",
-                },
-                "weekly": weekly_state,
-                "monthly": monthly_state,
-                "regime": regime,
-                "signal": signal,
-                "latest": {
-                    "others_mc": _to_float(others_mc.iloc[-1]) if not others_mc.empty else None,
-                    "usdt_d": _to_float(usdt_d.iloc[-1]) if not usdt_d.empty else None,
-                    "total_mc": _to_float(total.iloc[-1]) if not total.empty else None,
-                }
-            }
-
-            try:
-                with open(self.macro_timing_path, 'w', encoding='utf-8') as f:
-                    json.dump(payload, f, ensure_ascii=False, indent=2)
-            except Exception:
-                pass
-
-            return payload
-
-        except Exception:
-            return None
 
     def load_cache(self) -> Optional[Dict[str, Any]]:
         """Carrega dados do cache se ainda for válido"""
@@ -496,10 +273,10 @@ class GemsFinder:
                         else:
                             print(f"⚠️ {coin['symbol']}: Sem dados FDV - continuar análise")
 
-                        # �️ FILTRO CRÍTICO: SUPPLY UNLOCK RISK
+                        #  ️ FILTRO CRÍTICO: SUPPLY UNLOCK RISK
                         supply_safe = self.check_supply_unlock_risk(coin)
                         if not supply_safe:
-                            print(f"� {coin['symbol']}: ALTO RISCO DE INFLAÇÃO - Supply unlock perigoso - dispensar")
+                            print(f"  {coin['symbol']}: ALTO RISCO DE INFLAÇÃO - Supply unlock perigoso - dispensar")
                             continue
                         else:
                             print(f"✅ {coin['symbol']}: Supply seguro - sem risco de inflação excessiva")
